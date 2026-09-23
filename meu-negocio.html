@@ -1,1 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Meu negócio | Nexora</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
+
+</head>
+
+<body class="business-page">
+
+    <div class="business-layout">
+
+        <!-- MENU -->
+
+        <aside class="business-sidebar">
+
+            <a
+                href="painel.html"
+                class="business-brand"
+            >
+
+                <span class="business-brand-symbol">
+                    N
+                </span>
+
+                <span>
+                    Nexora
+                </span>
+
+            </a>
+
+
+            <nav class="business-nav">
+
+                <a href="painel.html">
+                    <span>⌂</span>
+                    Painel
+                </a>
+
+                <a
+                    href="meu-negocio.html"
+                    class="active"
+                >
+                    <span>□</span>
+                    Meu negócio
+                </a>
+
+                <a href="#">
+                    <span>◷</span>
+                    Agenda
+                </a>
+
+                <a href="#">
+                    <span>◇</span>
+                    Serviços
+                </a>
+
+                <a href="#">
+                    <span>▤</span>
+                    Publicações
+                </a>
+
+                <a href="#">
+                    <span>♙</span>
+                    Clientes
+                </a>
+
+                <a href="#">
+                    <span>R$</span>
+                    Pagamentos
+                </a>
+
+            </nav>
+
+
+            <button
+                type="button"
+                id="logout-button"
+                class="business-logout"
+            >
+                Sair da conta
+            </button>
+
+        </aside>
+
+
+        <!-- CONTEÚDO -->
+
+        <main class="business-main">
+
+            <header class="business-header">
+
+                <div>
+
+                    <a
+                        href="painel.html"
+                        class="back-link"
+                    >
+                        ← Voltar ao painel
+                    </a>
+
+                    <h1>
+                        Meu negócio
+                    </h1>
+
+                    <p>
+                        Configure as informações públicas
+                        do seu negócio.
+                    </p>
+
+                </div>
+
+            </header>
+
+
+            <section class="business-content">
+
+                <!-- STATUS -->
+
+                <div
+                    id="business-status"
+                    class="business-message"
+                ></div>
+
+
+                <!-- FORMULÁRIO -->
+
+                <form
+                    id="business-form"
+                    class="business-form"
+                >
+
+                    <div class="business-card">
+
+                        <div class="business-card-header">
+
+                            <div>
+
+                                <h2>
+                                    Informações principais
+                                </h2>
+
+                                <p>
+                                    Essas informações serão
+                                    utilizadas no seu perfil público.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-grid">
+
+                            <!-- NOME -->
+
+                            <div class="form-group full">
+
+                                <label for="nome-negocio">
+                                    Nome do negócio
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="nome-negocio"
+                                    placeholder="Ex: Studio Bella"
+                                    maxlength="100"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- USERNAME -->
+
+                            <div class="form-group">
+
+                                <label for="username-negocio">
+                                    Nome de usuário
+                                </label>
+
+                                <div class="username-input">
+
+                                    <span>@</span>
+
+                                    <input
+                                        type="text"
+                                        id="username-negocio"
+                                        placeholder="studiobella"
+                                        maxlength="50"
+                                        required
+                                    >
+
+                                </div>
+
+                                <small>
+                                    Será usado no endereço público
+                                    do seu negócio.
+                                </small>
+
+                            </div>
+
+
+                            <!-- TELEFONE -->
+
+                            <div class="form-group">
+
+                                <label for="telefone">
+                                    Telefone
+                                </label>
+
+                                <input
+                                    type="tel"
+                                    id="telefone"
+                                    placeholder="(00) 00000-0000"
+                                    maxlength="20"
+                                >
+
+                            </div>
+
+
+                            <!-- CIDADE -->
+
+                            <div class="form-group">
+
+                                <label for="cidade">
+                                    Cidade
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="cidade"
+                                    placeholder="Ex: Vila Velha"
+                                    maxlength="100"
+                                >
+
+                            </div>
+
+
+                            <!-- ENDEREÇO -->
+
+                            <div class="form-group">
+
+                                <label for="endereco">
+                                    Endereço
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="endereco"
+                                    placeholder="Rua, número, bairro"
+                                    maxlength="200"
+                                >
+
+                            </div>
+
+
+                            <!-- DESCRIÇÃO -->
+
+                            <div class="form-group full">
+
+                                <label for="descricao">
+                                    Descrição
+                                </label>
+
+                                <textarea
+                                    id="descricao"
+                                    rows="5"
+                                    maxlength="500"
+                                    placeholder="Conte um pouco sobre seu negócio..."
+                                ></textarea>
+
+                                <small>
+                                    Máximo de 500 caracteres.
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PRÉVIA -->
+
+                    <div class="business-card">
+
+                        <div class="business-card-header">
+
+                            <div>
+
+                                <h2>
+                                    Prévia do negócio
+                                </h2>
+
+                                <p>
+                                    Veja como as informações
+                                    principais serão apresentadas.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="business-preview">
+
+                            <div class="preview-avatar">
+                                N
+                            </div>
+
+                            <div class="preview-info">
+
+                                <h3 id="preview-name">
+                                    Seu negócio
+                                </h3>
+
+                                <span id="preview-username">
+                                    @seunegocio
+                                </span>
+
+                                <p id="preview-description">
+                                    Sua descrição aparecerá aqui.
+                                </p>
+
+                                <div class="preview-location">
+
+                                    <span id="preview-city">
+                                        Sua cidade
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BOTÕES -->
+
+                    <div class="business-actions">
+
+                        <a
+                            href="painel.html"
+                            class="cancel-button"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            id="save-business-button"
+                            class="save-button"
+                        >
+                            Salvar negócio
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- SUPABASE -->
+
+    <script src="js/supabase.js"></script>
+
+    <!-- SCRIPT DA PÁGINA -->
+
+    <script src="js/meu-negocio.js"></script>
+
+</body>
+
+</html>
