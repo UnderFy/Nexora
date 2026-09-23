@@ -20,7 +20,8 @@ form.addEventListener("submit", async function (event) {
     const email = document
         .getElementById("email")
         .value
-        .trim();
+        .trim()
+        .toLowerCase();
 
     const senha = document
         .getElementById("senha")
@@ -50,13 +51,6 @@ form.addEventListener("submit", async function (event) {
 
     try {
 
-        /*
-         * CRIA A CONTA NO SUPABASE AUTH
-         *
-         * Os dados abaixo serão utilizados pelo
-         * trigger do Supabase para criar o perfil.
-         */
-
         const {
             data: authData,
             error: authError
@@ -81,27 +75,20 @@ form.addEventListener("submit", async function (event) {
         }
 
         if (!authData.user) {
-
             throw new Error(
                 "Não foi possível criar o usuário."
             );
-
         }
-
-        /*
-         * O perfil agora é criado automaticamente
-         * pelo trigger do Supabase.
-         */
 
         if (!authData.session) {
 
             statusElement.textContent =
-                "Cadastro realizado! Verifique seu e-mail para confirmar sua conta.";
+                "Conta criada! Verifique seu e-mail para confirmar o cadastro.";
 
         } else {
 
             statusElement.textContent =
-                "Cadastro realizado com sucesso!";
+                "Conta criada com sucesso!";
 
         }
 
@@ -109,14 +96,18 @@ form.addEventListener("submit", async function (event) {
 
     } catch (error) {
 
-        console.error("Erro no cadastro:", error);
+        console.error(
+            "Erro no cadastro:",
+            error
+        );
 
         const mensagem =
             error?.message || "Erro desconhecido.";
 
         if (
-            mensagem.toLowerCase().includes("duplicate") ||
-            mensagem.toLowerCase().includes("unique")
+            mensagem
+                .toLowerCase()
+                .includes("duplicate")
         ) {
 
             statusElement.textContent =
@@ -132,7 +123,6 @@ form.addEventListener("submit", async function (event) {
     } finally {
 
         registerButton.disabled = false;
-
         registerButton.textContent =
             "Criar minha conta";
 
