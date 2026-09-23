@@ -28,6 +28,9 @@ const cidadeInput =
 const descricaoInput =
     document.getElementById("descricao");
 
+const logoInput =
+    document.getElementById("logo-input");
+
 
 const previewName =
     document.getElementById("preview-name");
@@ -41,10 +44,15 @@ const previewDescription =
 const previewCity =
     document.getElementById("preview-city");
 
+const previewAvatar =
+    document.getElementById("preview-avatar");
+
 
 let usuarioAtual = null;
 
 let negocioAtual = null;
+
+let logoUrlAtual = null;
 
 
 /* =========================================
@@ -105,6 +113,28 @@ function atualizarPreview() {
     previewCity.textContent =
         cidade ||
         "Sua cidade";
+
+
+    if (previewAvatar) {
+
+        if (logoUrlAtual) {
+
+            previewAvatar.innerHTML =
+                `<img src="${logoUrlAtual}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+
+        } else {
+
+            const inicial =
+                nome
+                    ? nome.charAt(0).toUpperCase()
+                    : "N";
+
+            previewAvatar.innerHTML =
+                inicial;
+
+        }
+
+    }
 
 }
 
@@ -239,6 +269,10 @@ async function carregarNegocio() {
         negocioAtual.descricao || "";
 
 
+    logoUrlAtual =
+        negocioAtual.logo_url || null;
+
+
     atualizarPreview();
 
 
@@ -359,6 +393,65 @@ form.addEventListener(
 
         try {
 
+            let logoUrl =
+                logoUrlAtual;
+
+
+            /* =========================
+               UPLOAD DA LOGO (SE SELECIONADA)
+            ========================== */
+
+            if (logoInput && logoInput.files && logoInput.files[0]) {
+
+                const file =
+                    logoInput.files[0];
+
+                const fileExt =
+                    file.name.split('.').pop();
+
+                const fileName =
+                    `${usuarioAtual.id}-${Date.now()}.${fileExt}`;
+
+
+                try {
+
+                    const { data: uploadData, error: uploadError } =
+                        await supabaseClient
+                            .storage
+                            .from("logos")
+                            .upload(fileName, file, { upsert: true });
+
+
+                    if (!uploadError && uploadData) {
+
+                        const { data: urlData } =
+                            supabaseClient
+                                .storage
+                                .from("logos")
+                                .getPublicUrl(fileName);
+
+
+                        if (urlData && urlData.publicUrl) {
+
+                            logoUrl =
+                                urlData.publicUrl;
+
+                        }
+
+                    }
+
+                } catch (errUpload) {
+
+                    console.warn(
+                        "Bucket de logos não configurado ou falhou upload, mantendo dados sem upload.",
+                        errUpload
+                    );
+
+                }
+
+            }
+
+
             const dadosNegocio = {
 
                 usuario_id:
@@ -380,7 +473,10 @@ form.addEventListener(
                     endereco || null,
 
                 cidade:
-                    cidade || null
+                    cidade || null,
+
+                logo_url:
+                    logoUrl || null
 
             };
 
@@ -414,7 +510,10 @@ form.addEventListener(
                                 dadosNegocio.endereco,
 
                             cidade:
-                                dadosNegocio.cidade
+                                dadosNegocio.cidade,
+
+                            logo_url:
+                                dadosNegocio.logo_url
                         })
                         .eq(
                             "id",
@@ -494,6 +593,9 @@ form.addEventListener(
             }
 
 
+            logoUrlAtual =
+                dadosNegocio.logo_url;
+
             atualizarPreview();
 
 
@@ -563,6 +665,43 @@ form.addEventListener(
     );
 
 });
+
+
+if (logoInput) {
+
+    logoInput.addEventListener(
+        "change",
+        function (event) {
+
+            const file =
+                event.target.files[0];
+
+
+            if (file) {
+
+                const reader =
+                    new FileReader();
+
+
+                reader.onload =
+                    function (e) {
+
+                        logoUrlAtual =
+                            e.target.result;
+
+                        atualizarPreview();
+
+                    };
+
+
+                reader.readAsDataURL(file);
+
+            }
+
+        }
+    );
+
+}
 
 
 /* =========================================
