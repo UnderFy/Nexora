@@ -2,11 +2,9 @@ const form = document.getElementById("login-form");
 const statusElement = document.getElementById("login-status");
 const loginButton = document.getElementById("login-button");
 
-
 form.addEventListener("submit", async function (event) {
 
     event.preventDefault();
-
 
     const email = document
         .getElementById("email")
@@ -17,60 +15,41 @@ form.addEventListener("submit", async function (event) {
         .getElementById("senha")
         .value;
 
-
     if (!email || !senha) {
-
         statusElement.textContent =
             "Preencha todos os campos.";
-
         return;
     }
 
-
     loginButton.disabled = true;
-
-    loginButton.textContent =
-        "Entrando...";
-
-    statusElement.textContent = "";
-
+    loginButton.textContent = "Entrando...";
+    statusElement.textContent = "1. Tentando entrar...";
 
     try {
 
-        /*
-         * 1. LOGIN NO SUPABASE AUTH
-         */
-
+        // LOGIN
         const {
             data,
             error
         } = await supabaseClient.auth.signInWithPassword({
-
             email: email,
-
             password: senha
-
         });
-
 
         if (error) {
             throw error;
         }
 
-
         if (!data.user) {
-
             throw new Error(
-                "Não foi possível entrar na conta."
+                "Usuário não retornado pelo Supabase."
             );
-
         }
 
+        statusElement.textContent =
+            "2. Login realizado. Buscando perfil...";
 
-        /*
-         * 2. BUSCAR O PERFIL
-         */
-
+        // BUSCAR PERFIL
         const {
             data: perfil,
             error: perfilError
@@ -80,72 +59,51 @@ form.addEventListener("submit", async function (event) {
             .eq("id", data.user.id)
             .single();
 
-
         if (perfilError) {
             throw perfilError;
         }
 
+        if (!perfil) {
+            throw new Error(
+                "Perfil não encontrado."
+            );
+        }
 
-        /*
-         * 3. REDIRECIONAR
-         */
+        statusElement.textContent =
+            "3. Perfil encontrado: " + perfil.tipo;
 
+        // REDIRECIONAMENTO
         if (perfil.tipo === "empreendedor") {
 
-            window.location.href =
-                "painel.html";
+            statusElement.textContent =
+                "4. Redirecionando para o painel...";
+
+            setTimeout(function () {
+
+                window.location.href = "painel.html";
+
+            }, 500);
 
         } else {
 
             statusElement.textContent =
-                "Tipo de conta não reconhecido.";
+                "Tipo de conta não reconhecido: " +
+                perfil.tipo;
 
         }
-
 
     } catch (error) {
 
-        console.error(
-            "Erro no login:",
-            error
-        );
+        console.error("Erro no login:", error);
 
-
-        const mensagem =
-            error?.message || "";
-
-
-        if (
-            mensagem
-                .toLowerCase()
-                .includes("invalid login credentials")
-        ) {
-
-            statusElement.textContent =
-                "E-mail ou senha incorretos.";
-
-        } else if (
-            mensagem
-                .toLowerCase()
-                .includes("email not confirmed")
-        ) {
-
-            statusElement.textContent =
-                "Confirme seu e-mail antes de entrar.";
-
-        } else {
-
-            statusElement.textContent =
-                "Erro ao entrar: " + mensagem;
-
-        }
+        statusElement.textContent =
+            "ERRO: " +
+            (error?.message || "Erro desconhecido.");
 
     } finally {
 
         loginButton.disabled = false;
-
-        loginButton.textContent =
-            "Entrar";
+        loginButton.textContent = "Entrar";
 
     }
 
