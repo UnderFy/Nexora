@@ -1,1 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Criar conta | Nexora</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="auth-container">
+
+        <section class="auth-card">
+
+            <div class="logo">
+                NEXORA
+            </div>
+
+            <h1>Crie sua conta</h1>
+
+            <p class="subtitle">
+                Comece a construir a presença digital do seu negócio.
+            </p>
+
+            <form id="register-form">
+
+                <div class="form-group">
+                    <label for="nome">Seu nome</label>
+
+                    <input
+                        type="text"
+                        id="nome"
+                        placeholder="Ex: André Silva"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="username">Seu @usuário</label>
+
+                    <input
+                        type="text"
+                        id="username"
+                        placeholder="Ex: andre"
+                        required
+                    >
+
+                    <small>
+                        Esse será seu identificador na Nexora.
+                    </small>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="seuemail@email.com"
+                        required
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="senha">Senha</label>
+
+                    <input
+                        type="password"
+                        id="senha"
+                        placeholder="Mínimo de 6 caracteres"
+                        minlength="6"
+                        required
+                    >
+                </div>
+
+
+                <button
+                    type="submit"
+                    id="register-button"
+                    class="primary-button"
+                >
+                    Criar minha conta
+                </button>
+
+            </form>
+
+
+            <div id="register-status" class="status"></div>
+
+
+            <p class="auth-footer">
+                Já possui uma conta?
+                <a href="login.html">Entrar</a>
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- Biblioteca oficial do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configuração -->
+    <script src="js/supabase.js"></script>
+
+    <!-- Cadastro -->
+    <script src="js/cadastro.js"></script>
+
+</body>
+</html>
