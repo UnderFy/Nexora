@@ -1,1 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Entrar | Nexora</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="auth-container">
+
+        <section class="auth-card">
+
+            <div class="logo">
+                NEXORA
+            </div>
+
+            <h1>Bem-vindo de volta</h1>
+
+            <p class="subtitle">
+                Entre na sua conta para continuar.
+            </p>
+
+
+            <form id="login-form">
+
+                <div class="form-group">
+
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        placeholder="seuemail@email.com"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="senha">
+                        Senha
+                    </label>
+
+                    <input
+                        type="password"
+                        id="senha"
+                        placeholder="Sua senha"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    id="login-button"
+                    class="primary-button"
+                >
+                    Entrar
+                </button>
+
+            </form>
+
+
+            <div
+                id="login-status"
+                class="status"
+            ></div>
+
+
+            <p class="auth-footer">
+                Ainda não possui uma conta?
+                <a href="cadastro.html">
+                    Criar conta
+                </a>
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- Biblioteca oficial do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configuração -->
+    <script src="js/supabase.js"></script>
+
+    <!-- Login -->
+    <script src="js/login.js"></script>
+
+</body>
+
+</html>
