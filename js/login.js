@@ -23,60 +23,62 @@ form.addEventListener("submit", async function (event) {
 
     loginButton.disabled = true;
     loginButton.textContent = "Entrando...";
-    statusElement.textContent = "1. Tentando entrar...";
+    statusElement.textContent = "Entrando...";
 
     try {
 
-        // LOGIN
+        // 1. LOGIN
         const {
-            data,
-            error
+            data: authData,
+            error: authError
         } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: senha
         });
 
-        if (error) {
-            throw error;
+        if (authError) {
+            throw authError;
         }
 
-        if (!data.user) {
+        if (!authData.user) {
             throw new Error(
-                "Usuário não retornado pelo Supabase."
+                "Usuário não encontrado após o login."
             );
         }
 
         statusElement.textContent =
-            "2. Login realizado. Buscando perfil...";
+            "Login realizado. Carregando perfil...";
 
-        // BUSCAR PERFIL
+
+        // 2. BUSCAR PERFIL
         const {
-            data: perfil,
+            data: perfis,
             error: perfilError
         } = await supabaseClient
             .from("perfis")
             .select("tipo")
-            .eq("id", data.user.id)
-            .single();
+            .eq("id", authData.user.id)
+            .limit(1);
 
         if (perfilError) {
             throw perfilError;
         }
 
-        if (!perfil) {
+        if (!perfis || perfis.length === 0) {
             throw new Error(
-                "Perfil não encontrado."
+                "Perfil do usuário não encontrado."
             );
         }
 
-        statusElement.textContent =
-            "3. Perfil encontrado: " + perfil.tipo;
+        const perfil = perfis[0];
 
-        // REDIRECIONAMENTO
+
+        // 3. IDENTIFICAR TIPO DE CONTA
+
         if (perfil.tipo === "empreendedor") {
 
             statusElement.textContent =
-                "4. Redirecionando para o painel...";
+                "Login realizado! Abrindo painel...";
 
             setTimeout(function () {
 
@@ -86,19 +88,46 @@ form.addEventListener("submit", async function (event) {
 
         } else {
 
-            statusElement.textContent =
-                "Tipo de conta não reconhecido: " +
-                perfil.tipo;
+            throw new Error(
+                "Tipo de conta não reconhecido."
+            );
 
         }
 
     } catch (error) {
 
-        console.error("Erro no login:", error);
+        console.error(
+            "Erro no login:",
+            error
+        );
 
-        statusElement.textContent =
-            "ERRO: " +
-            (error?.message || "Erro desconhecido.");
+        const mensagem =
+            error?.message || "Erro desconhecido.";
+
+        if (
+            mensagem
+                .toLowerCase()
+                .includes("invalid login credentials")
+        ) {
+
+            statusElement.textContent =
+                "E-mail ou senha incorretos.";
+
+        } else if (
+            mensagem
+                .toLowerCase()
+                .includes("email not confirmed")
+        ) {
+
+            statusElement.textContent =
+                "Confirme seu e-mail antes de entrar.";
+
+        } else {
+
+            statusElement.textContent =
+                "ERRO: " + mensagem;
+
+        }
 
     } finally {
 
