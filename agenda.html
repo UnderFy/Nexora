@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda | Nexora</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+
+        <!-- MENU LATERAL -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <a href="painel.html" class="brand">
+                    <span class="brand-symbol">N</span>
+                    <span class="brand-name">Nexora</span>
+                </a>
+
+                <nav class="sidebar-nav">
+                    <p class="nav-title">PRINCIPAL</p>
+                    <a href="painel.html" class="nav-item">
+                        <span class="nav-icon">⌂</span>
+                        <span>Painel</span>
+                    </a>
+                    <a href="agenda.html" class="nav-item active">
+                        <span class="nav-icon">▣</span>
+                        <span>Agenda</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">▤</span>
+                        <span>Publicações</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">◇</span>
+                        <span>Serviços</span>
+                    </a>
+
+                    <p class="nav-title">NEGÓCIO</p>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">♙</span>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">R$</span>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">□</span>
+                        <span>Meu negócio</span>
+                    </a>
+
+                    <p class="nav-title">CONTA</p>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">⚙</span>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- USUÁRIO DA SIDEBAR -->
+            <div class="sidebar-user">
+                <div class="user-avatar" id="sidebar-avatar">N</div>
+                <div class="user-info">
+                    <strong id="sidebar-name">Carregando...</strong>
+                    <span>Empreendedor</span>
+                </div>
+                <button type="button" class="logout-icon" id="logout-button" title="Sair">↪</button>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="dashboard-main">
+
+            <!-- CABEÇALHO -->
+            <header class="dashboard-header">
+                <button type="button" class="mobile-menu-button" id="mobile-menu-button" aria-label="Abrir menu">☰</button>
+                <div class="header-left">
+                    <span class="header-label">Agenda de Atendimentos</span>
+                </div>
+                <div class="header-right">
+                    <button type="button" class="notification-button" title="Notificações">♢</button>
+                    <div class="header-avatar" id="header-avatar">N</div>
+                </div>
+            </header>
+
+            <!-- CONTEÚDO DA AGENDA -->
+            <section class="dashboard-content">
+
+                <div class="welcome-section">
+                    <div>
+                        <p class="welcome-small">Gerencie seus horários e clientes</p>
+                        <h1>Sua <span>Agenda</span></h1>
+                    </div>
+                </div>
+
+                <!-- CARDS DE METRICAS DA AGENDA -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Hoje</span>
+                            <span class="stat-icon blue">◷</span>
+                        </div>
+                        <strong class="stat-number" id="total-hoje">0</strong>
+                        <span class="stat-description">Agendamentos para hoje</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Pendentes</span>
+                            <span class="stat-icon purple">⏳</span>
+                        </div>
+                        <strong class="stat-number" id="total-pendentes">0</strong>
+                        <span class="stat-description">Aguardando confirmação/sinal</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Confirmados</span>
+                            <span class="stat-icon blue">✓</span>
+                        </div>
+                        <strong class="stat-number" id="total-confirmados">0</strong>
+                        <span class="stat-description">Prontos para atendimento</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Concluídos</span>
+                            <span class="stat-icon purple">★</span>
+                        </div>
+                        <strong class="stat-number" id="total-concluidos">0</strong>
+                        <span class="stat-description">Atendimentos realizados</span>
+                    </div>
+                </div>
+
+                <!-- LISTA DE AGENDAMENTOS -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Próximos Agendamentos</h2>
+                        <p>Acompanhe e atualize os horários marcados pelos seus clientes.</p>
+                    </div>
+
+                    <div id="lista-agendamentos" class="quick-actions">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 20px 0;">
+                            Carregando agendamentos...
+                        </p>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/supabase.js"></script>
+    <script src="js/agenda.js"></script>
+</body>
+
+</html>
