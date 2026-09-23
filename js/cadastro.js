@@ -2,11 +2,9 @@ const form = document.getElementById("register-form");
 const statusElement = document.getElementById("register-status");
 const registerButton = document.getElementById("register-button");
 
-
 form.addEventListener("submit", async function (event) {
 
     event.preventDefault();
-
 
     const nome = document
         .getElementById("nome")
@@ -28,9 +26,7 @@ form.addEventListener("submit", async function (event) {
         .getElementById("senha")
         .value;
 
-
     username = username.replace(/^@/, "");
-
 
     if (!nome || !username || !email || !senha) {
 
@@ -40,7 +36,6 @@ form.addEventListener("submit", async function (event) {
         return;
     }
 
-
     if (senha.length < 6) {
 
         statusElement.textContent =
@@ -49,19 +44,17 @@ form.addEventListener("submit", async function (event) {
         return;
     }
 
-
     registerButton.disabled = true;
-
-    registerButton.textContent =
-        "Criando conta...";
-
+    registerButton.textContent = "Criando conta...";
     statusElement.textContent = "";
-
 
     try {
 
         /*
-         * 1. CRIA A CONTA NO SUPABASE AUTH
+         * CRIA A CONTA NO SUPABASE AUTH
+         *
+         * Os dados abaixo serão utilizados pelo
+         * trigger do Supabase para criar o perfil.
          */
 
         const {
@@ -71,20 +64,23 @@ form.addEventListener("submit", async function (event) {
 
             email: email,
 
-            password: senha
+            password: senha,
+
+            options: {
+                data: {
+                    nome: nome,
+                    username: username,
+                    tipo: "empreendedor"
+                }
+            }
 
         });
-
 
         if (authError) {
             throw authError;
         }
 
-
-        const user = authData.user;
-
-
-        if (!user) {
+        if (!authData.user) {
 
             throw new Error(
                 "Não foi possível criar o usuário."
@@ -92,70 +88,35 @@ form.addEventListener("submit", async function (event) {
 
         }
 
-
         /*
-         * 2. CRIA O PERFIL DO USUÁRIO
-         */
-
-        const {
-            error: perfilError
-        } = await supabaseClient
-            .from("perfis")
-            .insert({
-
-                id: user.id,
-
-                nome: nome,
-
-                username: username,
-
-                tipo: "empreendedor"
-
-            });
-
-
-        if (perfilError) {
-            throw perfilError;
-        }
-
-
-        /*
-         * 3. SUCESSO
-         */
-
-        statusElement.textContent =
-            "Conta criada com sucesso!";
-
-
-        form.reset();
-
-
-        /*
-         * Se a confirmação de e-mail estiver
-         * ativada no Supabase, mostramos a mensagem.
+         * O perfil agora é criado automaticamente
+         * pelo trigger do Supabase.
          */
 
         if (!authData.session) {
 
             statusElement.textContent =
-                "Conta criada! Verifique seu e-mail para confirmar o cadastro.";
+                "Cadastro realizado! Verifique seu e-mail para confirmar sua conta.";
 
         } else {
 
             statusElement.textContent =
-                "Conta criada com sucesso!";
+                "Cadastro realizado com sucesso!";
 
         }
 
+        form.reset();
 
     } catch (error) {
 
-        console.error(error);
+        console.error("Erro no cadastro:", error);
 
+        const mensagem =
+            error?.message || "Erro desconhecido.";
 
         if (
-            error.message &&
-            error.message.toLowerCase().includes("duplicate")
+            mensagem.toLowerCase().includes("duplicate") ||
+            mensagem.toLowerCase().includes("unique")
         ) {
 
             statusElement.textContent =
@@ -164,7 +125,7 @@ form.addEventListener("submit", async function (event) {
         } else {
 
             statusElement.textContent =
-                "Erro ao criar conta: " + error.message;
+                "Erro ao criar conta: " + mensagem;
 
         }
 
