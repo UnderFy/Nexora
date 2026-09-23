@@ -1,117 +1,180 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Criar conta | Nexora</title>
-
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
-    <main class="auth-container">
-
-        <section class="auth-card">
-
-            <div class="logo">
-                NEXORA
-            </div>
-
-            <h1>Crie sua conta</h1>
-
-            <p class="subtitle">
-                Comece a construir a presença digital do seu negócio.
-            </p>
-
-            <form id="register-form">
-
-                <div class="form-group">
-                    <label for="nome">Seu nome</label>
-
-                    <input
-                        type="text"
-                        id="nome"
-                        placeholder="Ex: André Silva"
-                        required
-                    >
-                </div>
+const form = document.getElementById("register-form");
+const statusElement = document.getElementById("register-status");
+const registerButton = document.getElementById("register-button");
 
 
-                <div class="form-group">
-                    <label for="username">Seu @usuário</label>
+form.addEventListener("submit", async function (event) {
 
-                    <input
-                        type="text"
-                        id="username"
-                        placeholder="Ex: andre"
-                        required
-                    >
-
-                    <small>
-                        Esse será seu identificador na Nexora.
-                    </small>
-                </div>
+    event.preventDefault();
 
 
-                <div class="form-group">
-                    <label for="email">E-mail</label>
+    const nome = document
+        .getElementById("nome")
+        .value
+        .trim();
 
-                    <input
-                        type="email"
-                        id="email"
-                        placeholder="seuemail@email.com"
-                        required
-                    >
-                </div>
+    let username = document
+        .getElementById("username")
+        .value
+        .trim()
+        .toLowerCase();
 
+    const email = document
+        .getElementById("email")
+        .value
+        .trim();
 
-                <div class="form-group">
-                    <label for="senha">Senha</label>
-
-                    <input
-                        type="password"
-                        id="senha"
-                        placeholder="Mínimo de 6 caracteres"
-                        minlength="6"
-                        required
-                    >
-                </div>
+    const senha = document
+        .getElementById("senha")
+        .value;
 
 
-                <button
-                    type="submit"
-                    id="register-button"
-                    class="primary-button"
-                >
-                    Criar minha conta
-                </button>
-
-            </form>
+    username = username.replace(/^@/, "");
 
 
-            <div id="register-status" class="status"></div>
+    if (!nome || !username || !email || !senha) {
+
+        statusElement.textContent =
+            "Preencha todos os campos.";
+
+        return;
+    }
 
 
-            <p class="auth-footer">
-                Já possui uma conta?
-                <a href="login.html">Entrar</a>
-            </p>
+    if (senha.length < 6) {
 
-        </section>
+        statusElement.textContent =
+            "A senha precisa ter pelo menos 6 caracteres.";
 
-    </main>
+        return;
+    }
 
 
-    <!-- Biblioteca oficial do Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    registerButton.disabled = true;
 
-    <!-- Configuração -->
-    <script src="js/supabase.js"></script>
+    registerButton.textContent =
+        "Criando conta...";
 
-    <!-- Cadastro -->
-    <script src="js/cadastro.js"></script>
+    statusElement.textContent = "";
 
-</body>
-</html>
+
+    try {
+
+        /*
+         * 1. CRIA A CONTA NO SUPABASE AUTH
+         */
+
+        const {
+            data: authData,
+            error: authError
+        } = await supabaseClient.auth.signUp({
+
+            email: email,
+
+            password: senha
+
+        });
+
+
+        if (authError) {
+            throw authError;
+        }
+
+
+        const user = authData.user;
+
+
+        if (!user) {
+
+            throw new Error(
+                "Não foi possível criar o usuário."
+            );
+
+        }
+
+
+        /*
+         * 2. CRIA O PERFIL DO USUÁRIO
+         */
+
+        const {
+            error: perfilError
+        } = await supabaseClient
+            .from("perfis")
+            .insert({
+
+                id: user.id,
+
+                nome: nome,
+
+                username: username,
+
+                tipo: "empreendedor"
+
+            });
+
+
+        if (perfilError) {
+            throw perfilError;
+        }
+
+
+        /*
+         * 3. SUCESSO
+         */
+
+        statusElement.textContent =
+            "Conta criada com sucesso!";
+
+
+        form.reset();
+
+
+        /*
+         * Se a confirmação de e-mail estiver
+         * ativada no Supabase, mostramos a mensagem.
+         */
+
+        if (!authData.session) {
+
+            statusElement.textContent =
+                "Conta criada! Verifique seu e-mail para confirmar o cadastro.";
+
+        } else {
+
+            statusElement.textContent =
+                "Conta criada com sucesso!";
+
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+
+        if (
+            error.message &&
+            error.message.toLowerCase().includes("duplicate")
+        ) {
+
+            statusElement.textContent =
+                "Esse nome de usuário já está sendo usado.";
+
+        } else {
+
+            statusElement.textContent =
+                "Erro ao criar conta: " + error.message;
+
+        }
+
+    } finally {
+
+        registerButton.disabled = false;
+
+        registerButton.textContent =
+            "Criar minha conta";
+
+    }
+
+});
