@@ -70,6 +70,8 @@ function mostrarMensagem(
     statusElement.className =
         "business-message " + tipo;
 
+    statusElement.style.display = "block";
+
 }
 
 
@@ -193,23 +195,12 @@ async function carregarNegocio() {
     } =
         await supabaseClient
             .from("negocios")
-            .select(`
-                id,
-                usuario_id,
-                nome,
-                username,
-                descricao,
-                telefone,
-                endereco,
-                cidade,
-                logo_url,
-                capa_url
-            `)
+            .select("*")
             .eq(
-                "usuario_id",
+                "id",
                 usuarioAtual.id
             )
-            .limit(1);
+            .maybeSingle();
 
 
     if (error) {
@@ -221,7 +212,7 @@ async function carregarNegocio() {
      * Ainda não existe negócio.
      */
 
-    if (!data || data.length === 0) {
+    if (!data) {
 
         negocioAtual = null;
 
@@ -242,7 +233,7 @@ async function carregarNegocio() {
      */
 
     negocioAtual =
-        data[0];
+        data;
 
 
     nomeInput.value =
@@ -398,7 +389,7 @@ form.addEventListener(
 
 
             /* =========================
-               UPLOAD DA LOGO (SE SELECIONADA)
+               UPLOAD DA LOGO (OPCIONAL)
             ========================== */
 
             if (logoInput && logoInput.files && logoInput.files[0]) {
@@ -413,48 +404,48 @@ form.addEventListener(
                     `${usuarioAtual.id}-${Date.now()}.${fileExt}`;
 
 
-                try {
-
-                    const { data: uploadData, error: uploadError } =
-                        await supabaseClient
-                            .storage
-                            .from("logos")
-                            .upload(fileName, file, { upsert: true });
+                const { data: uploadData, error: uploadError } =
+                    await supabaseClient
+                        .storage
+                        .from("logos")
+                        .upload(fileName, file, { upsert: true });
 
 
-                    if (!uploadError && uploadData) {
-
-                        const { data: urlData } =
-                            supabaseClient
-                                .storage
-                                .from("logos")
-                                .getPublicUrl(fileName);
-
-
-                        if (urlData && urlData.publicUrl) {
-
-                            logoUrl =
-                                urlData.publicUrl;
-
-                        }
-
-                    }
-
-                } catch (errUpload) {
+                if (uploadError) {
 
                     console.warn(
-                        "Bucket de logos não configurado ou falhou upload, mantendo dados sem upload.",
-                        errUpload
+                        "Bucket de logos não encontrado ou sem permissão de upload.",
+                        uploadError
                     );
+
+                } else if (uploadData) {
+
+                    const { data: urlData } =
+                        supabaseClient
+                            .storage
+                            .from("logos")
+                            .getPublicUrl(fileName);
+
+
+                    if (urlData && urlData.publicUrl) {
+
+                        logoUrl =
+                            urlData.publicUrl;
+
+                    }
 
                 }
 
             }
 
 
+            /* =========================
+               GRAVAR NO BANCO (UPSERT)
+            ========================== */
+
             const dadosNegocio = {
 
-                usuario_id:
+                id:
                     usuarioAtual.id,
 
                 nome:
@@ -481,120 +472,33 @@ form.addEventListener(
             };
 
 
-            /* =========================
-               ATUALIZAR
-            ========================== */
-
-            if (negocioAtual) {
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from("negocios")
-                        .update({
-                            nome:
-                                dadosNegocio.nome,
-
-                            username:
-                                dadosNegocio.username,
-
-                            descricao:
-                                dadosNegocio.descricao,
-
-                            telefone:
-                                dadosNegocio.telefone,
-
-                            endereco:
-                                dadosNegocio.endereco,
-
-                            cidade:
-                                dadosNegocio.cidade,
-
-                            logo_url:
-                                dadosNegocio.logo_url
-                        })
-                        .eq(
-                            "id",
-                            negocioAtual.id
-                        )
-                        .select()
-                        .limit(1);
+            const { data, error } =
+                await supabaseClient
+                    .from("negocios")
+                    .upsert(dadosNegocio)
+                    .select()
+                    .maybeSingle();
 
 
-                if (error) {
-                    throw error;
-                }
+            if (error) {
 
-
-                if (
-                    data &&
-                    data.length > 0
-                ) {
-
-                    negocioAtual =
-                        data[0];
-
-                }
-
-
-                mostrarMensagem(
-                    "Negócio atualizado com sucesso!",
-                    "success"
-                );
-
-
-            } else {
-
-                /* =========================
-                   CRIAR
-                ========================== */
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabaseClient
-                        .from("negocios")
-                        .insert(
-                            dadosNegocio
-                        )
-                        .select()
-                        .limit(1);
-
-
-                if (error) {
-                    throw error;
-                }
-
-
-                if (
-                    !data ||
-                    data.length === 0
-                ) {
-
-                    throw new Error(
-                        "O negócio não foi criado."
-                    );
-
-                }
-
-
-                negocioAtual =
-                    data[0];
-
-
-                mostrarMensagem(
-                    "Negócio criado com sucesso!",
-                    "success"
-                );
+                throw error;
 
             }
 
 
+            negocioAtual =
+                data;
+
             logoUrlAtual =
                 dadosNegocio.logo_url;
+
+
+            mostrarMensagem(
+                "Negócio salvo com sucesso!",
+                "success"
+            );
+
 
             atualizarPreview();
 
@@ -659,7 +563,7 @@ form.addEventListener(
     descricaoInput
 ].forEach(function (input) {
 
-    input.addEventListener(
+    input?.addEventListener(
         "input",
         atualizarPreview
     );
@@ -708,7 +612,7 @@ if (logoInput) {
    LOGOUT
 ========================================= */
 
-logoutButton.addEventListener(
+logoutButton?.addEventListener(
     "click",
     async function () {
 
