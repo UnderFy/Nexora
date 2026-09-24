@@ -26,7 +26,6 @@ let servicoSelecionadoId = null;
 
 async function inicializarPaginaPublica() {
     try {
-        // 1. Obter o ID do negócio via Query String (?id=UUID_DO_NEGOCIO)
         const urlParams = new URLSearchParams(window.location.search);
         negocioId = urlParams.get("id");
 
@@ -35,12 +34,10 @@ async function inicializarPaginaPublica() {
             return;
         }
 
-        // 2. Definir a data mínima no calendário (hoje)
         const hoje = new Date().toISOString().split("T")[0];
         bookingDate.min = hoje;
         bookingDate.value = hoje;
 
-        // 3. Buscar Dados do Negócio no Supabase
         const { data: negocio, error: errNegocio } = await supabaseClient
             .from("negocios")
             .select("*")
@@ -48,11 +45,11 @@ async function inicializarPaginaPublica() {
             .maybeSingle();
 
         if (errNegocio || !negocio) {
+            console.error("Erro ao procurar negócio:", errNegocio);
             exibirErro();
             return;
         }
 
-        // Preencher informações do Perfil
         const nome = negocio.nome || "Meu Negócio";
         bizName.textContent = nome;
         bizAvatar.textContent = nome.trim().charAt(0).toUpperCase();
@@ -62,7 +59,6 @@ async function inicializarPaginaPublica() {
         bizLocation.textContent = `📍 ${[endereco, cidade].filter(Boolean).join(" - ") || "Localização não informada"}`;
         bizDescription.textContent = negocio.descricao || "";
 
-        // 4. Buscar Serviços do Negócio
         const { data: servicos, error: errServicos } = await supabaseClient
             .from("servicos")
             .select("*")
@@ -76,10 +72,8 @@ async function inicializarPaginaPublica() {
             renderizarServicos(servicos);
         }
 
-        // Configurar Seletor de Horários
         configurarHorarios();
 
-        // Mostrar tela principal
         loadingState.style.display = "none";
         publicContent.style.display = "block";
 
@@ -139,7 +133,6 @@ function exibirErro() {
     errorState.style.display = "block";
 }
 
-// Submeter Agendamento
 bookingForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -165,7 +158,7 @@ bookingForm?.addEventListener("submit", async (e) => {
         const nomeCliente = clientName.value.trim();
         const telefoneCliente = clientPhone.value.trim();
 
-        // 1. Cadastrar/Garantir Cliente na Tabela 'clientes'
+        // 1. Cadastrar/Procurar Cliente
         let clienteId = null;
         const { data: clienteExistente } = await supabaseClient
             .from("clientes")
@@ -177,7 +170,7 @@ bookingForm?.addEventListener("submit", async (e) => {
         if (clienteExistente) {
             clienteId = clienteExistente.id;
         } else {
-            const { data: novoCliente } = await supabaseClient
+            const { data: novoCliente, error: errNovoCliente } = await supabaseClient
                 .from("clientes")
                 .insert([{
                     negocio_id: negocioId,
@@ -185,12 +178,15 @@ bookingForm?.addEventListener("submit", async (e) => {
                     telefone: telefoneCliente
                 }])
                 .select("id")
-                .single();
+                .maybeSingle();
 
+            if (errNovoCliente) {
+                console.warn("Aviso ao criar cliente:", errNovoCliente);
+            }
             if (novoCliente) clienteId = novoCliente.id;
         }
 
-        // 2. Salvar Agendamento na Tabela 'agendamentos'
+        // 2. Registar Agendamento
         const { error: errAgendamento } = await supabaseClient
             .from("agendamentos")
             .insert([{
@@ -206,7 +202,7 @@ bookingForm?.addEventListener("submit", async (e) => {
 
         if (errAgendamento) throw errAgendamento;
 
-        // 3. Exibir Tela de Confirmação
+        // 3. Ecrã de Sucesso
         document.getElementById("summary-service").textContent = servicoObj ? servicoObj.nome : "Serviço";
         document.getElementById("summary-date").textContent = dataFormatada.split("-").reverse().join("/");
         document.getElementById("summary-time").textContent = horario;
@@ -216,8 +212,9 @@ bookingForm?.addEventListener("submit", async (e) => {
         successSection.style.display = "block";
 
     } catch (err) {
-        console.error("Erro ao registrar agendamento:", err);
-        mostrarErroForm("Erro ao registrar agendamento. Tente novamente.");
+        console.error("Erro no agendamento:", err);
+        const mensagemErro = err?.message || err?.details || "Erro desconhecido ao agendar.";
+        mostrarErroForm(`Erro ao agendar: ${mensagemErro}`);
     } finally {
         btnSubmit.disabled = false;
         btnSubmit.textContent = "Confirmar Agendamento";
