@@ -1,176 +1,209 @@
-// Elementos da interface
+/* ============================================================
+   NEXORA - LÓGICA DE SINCRONIZAÇÃO DO PAINEL (js/painel.js)
+============================================================ */
+
+// Inicializador de cliente Supabase
+const client = window.supabaseClient || (typeof supabaseClient !== "undefined" ? supabaseClient : null);
+
+// Elementos do DOM
 const welcomeName = document.getElementById("welcome-name");
 const sidebarName = document.getElementById("sidebar-name");
 const sidebarAvatar = document.getElementById("sidebar-avatar");
 const headerAvatar = document.getElementById("header-avatar");
 const logoutButton = document.getElementById("logout-button");
 
-// Elementos dos Cards de Estatísticas
-const statAgendamentos = document.querySelectorAll(".stat-card")[0];
-const statClientes = document.querySelectorAll(".stat-card")[1];
-const statPublicacoes = document.querySelectorAll(".stat-card")[2];
-const statServicos = document.querySelectorAll(".stat-card")[3];
+// Cards de Métricas
+const statCards = document.querySelectorAll(".stat-card");
+const statAgendamentos = statCards[0];
+const statClientes = statCards[1];
+const statPublicacoes = statCards[2];
+const statServicos = statCards[3];
+
+// Indicadores de Status
+const statusIndicator = document.querySelector(".status-indicator");
+const statusTitle = document.querySelector(".business-status strong");
+const statusDesc = document.querySelector(".business-status p");
 
 async function carregarPainel() {
-    try {
-        /* -------------------------------------------------------------
-         * 1. VERIFICA AUTENTICAÇÃO E PERFIL DO USUÁRIO
-         * ----------------------------------------------------------- */
-        const { data: authData, error: authError } = await supabaseClient.auth.getUser();
+    if (!client) {
+        console.error("Cliente Supabase não inicializado.");
+        return;
+    }
 
-        if (authError || !authData.user) {
+    try {
+        /* 1. AUTENTICAÇÃO */
+        const { data: authData, error: authError } = await client.auth.getUser();
+
+        if (authError || !authData?.user) {
             window.location.href = "login.html";
             return;
         }
 
         const user = authData.user;
 
-        // Busca perfil
-        const { data: perfil, error: perfilError } = await supabaseClient
-            .from("perfis")
-            .select("nome, username, tipo, foto_url")
-            .eq("id", user.id)
-            .limit(1);
+        /* 2. DADOS DO PERFIL */
+        try {
+            const { data: perfil } = await client
+                .from("perfis")
+                .select("nome, username, tipo")
+                .eq("id", user.id)
+                .maybeSingle();
 
-        if (perfilError || !perfil || perfil.length === 0) {
-            throw new Error("Perfil não encontrado.");
+            if (perfil) {
+                if (perfil.tipo && perfil.tipo !== "empreendedor") {
+                    window.location.href = "login.html";
+                    return;
+                }
+                const nomeCompleto = perfil.nome || user.user_metadata?.full_name || "Empreendedor";
+                const primeiroNome = nomeCompleto.trim().split(" ")[0];
+                const inicial = primeiroNome.charAt(0).toUpperCase() || "N";
+
+                if (welcomeName) welcomeName.textContent = primeiroNome;
+                if (sidebarName) sidebarName.textContent = nomeCompleto;
+                if (sidebarAvatar) sidebarAvatar.textContent = inicial;
+                if (headerAvatar) headerAvatar.textContent = inicial;
+            }
+        } catch (e) {
+            console.warn("Aviso ao carregar perfil:", e);
         }
 
-        const dadosPerfil = perfil[0];
+        /* 3. OBTÉM ID DO NEGÓCIO */
+        const negocioId = await obterNegocioId(user.id);
 
-        if (dadosPerfil.tipo !== "empreendedor") {
-            window.location.href = "login.html";
-            return;
-        }
+        /* 4. BUSCA PARALELA DAS ESTATÍSTICAS */
+        const [agendamentos, clientes, publicacoes, servicos] = await Promise.all([
+            contarRegistros("agendamentos", negocioId, user.id),
+            contarRegistros("clientes", negocioId, user.id),
+            contarRegistros("publicacoes", negocioId, user.id),
+            contarRegistros("servicos", negocioId, user.id)
+        ]);
 
-        // Atualiza Nome e Avatar
-        const nome = dadosPerfil.nome || "Empreendedor";
-        welcomeName.textContent = nome.split(" ")[0];
-        sidebarName.textContent = nome;
+        /* 5. ATUALIZAÇÃO DA INTERFACE */
+        atualizarCard(statAgendamentos, agendamentos, agendamentos === 1 ? "1 agendamento realizado" : `${agendamentos} agendamentos no total`);
+        atualizarCard(statClientes, clientes, clientes === 1 ? "1 cliente cadastrado" : `${clientes} clientes cadastrados`);
+        atualizarCard(statPublicacoes, publicacoes, publicacoes === 1 ? "1 publicação ativa" : `${publicacoes} conteúdos publicados`);
+        atualizarCard(statServicos, servicos, servicos === 1 ? "1 serviço cadastrado" : `${servicos} serviços cadastrados`);
 
-        const inicial = nome.trim().charAt(0).toUpperCase() || "N";
-        sidebarAvatar.textContent = inicial;
-        headerAvatar.textContent = inicial;
-
-        /* -------------------------------------------------------------
-         * 2. SINCRONIZA CONTADORES E DADOS DAS TABELAS DO SUPABASE
-         * ----------------------------------------------------------- */
-        await carregarEstatisticas(user.id);
+        // Status visual do negócio
+        atualizarStatusNegocio(negocioId, servicos, publicacoes);
 
     } catch (error) {
-        console.error("Erro ao carregar painel:", error);
-        if (error?.message?.toLowerCase().includes("jwt")) {
-            window.location.href = "login.html";
-            return;
-        }
-        welcomeName.textContent = "empreendedor";
-        sidebarName.textContent = "Empreendedor";
+        console.error("Erro ao sincronizar painel:", error);
     }
 }
 
-async function carregarEstatisticas(userId) {
-    // 1. Agendamentos
-    try {
-        const { count, error } = await supabaseClient
-            .from("agendamentos")
-            .select("*", { count: "exact", head: true })
-            .eq("empreendedor_id", userId);
+/**
+ * Procura o registro da empresa na tabela 'negocios'
+ */
+async function obterNegocioId(userId) {
+    const colunas = ["usuario_id", "user_id", "id"];
+    for (const col of colunas) {
+        try {
+            const { data, error } = await client
+                .from("negocios")
+                .select("id")
+                .eq(col, userId)
+                .maybeSingle();
 
-        if (!error && count !== null) {
-            const numEl = statAgendamentos.querySelector(".stat-number");
-            const descEl = statAgendamentos.querySelector(".stat-description");
-            numEl.textContent = count;
-            descEl.textContent = count === 1 ? "1 agendamento realizado" : `${count} agendamentos no total`;
+            if (!error && data?.id) {
+                return data.id;
+            }
+        } catch (e) {
+            // Tenta a próxima coluna
         }
-    } catch (e) {
-        console.warn("Erro ao buscar agendamentos:", e);
+    }
+    return null;
+}
+
+/**
+ * Conta os registros de uma tabela considerando variações de colunas de relação
+ */
+async function contarRegistros(tabela, negocioId, userId) {
+    const tentativas = [];
+
+    if (negocioId) {
+        tentativas.push({ coluna: "negocio_id", valor: negocioId });
+    }
+    if (userId) {
+        tentativas.push({ coluna: "usuario_id", valor: userId });
+        tentativas.push({ coluna: "user_id", valor: userId });
+        tentativas.push({ coluna: "empreendedor_id", valor: userId });
     }
 
-    // 2. Clientes
-    try {
-        const { count, error } = await supabaseClient
-            .from("clientes")
-            .select("*", { count: "exact", head: true })
-            .eq("empreendedor_id", userId);
+    for (const item of tentativas) {
+        try {
+            const { data, count, error } = await client
+                .from(tabela)
+                .select("id", { count: "exact" })
+                .eq(item.coluna, item.valor);
 
-        if (!error && count !== null) {
-            const numEl = statClientes.querySelector(".stat-number");
-            const descEl = statClientes.querySelector(".stat-description");
-            numEl.textContent = count;
-            descEl.textContent = count === 1 ? "1 cliente cadastrado" : `${count} clientes cadastrados`;
+            if (!error) {
+                return count !== null && count !== undefined ? count : (data ? data.length : 0);
+            }
+        } catch (err) {
+            // Tenta a próxima combinação de colunas
         }
-    } catch (e) {
-        console.warn("Erro ao buscar clientes:", e);
     }
 
-    // 3. Publicações (Portfólio)
-    try {
-        const { count, error } = await supabaseClient
-            .from("publicacoes")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", userId);
+    return 0;
+}
 
-        if (!error && count !== null) {
-            const numEl = statPublicacoes.querySelector(".stat-number");
-            const descEl = statPublicacoes.querySelector(".stat-description");
-            numEl.textContent = count;
-            descEl.textContent = count === 1 ? "1 publicação ativa" : `${count} conteúdos publicados`;
-        }
-    } catch (e) {
-        console.warn("Erro ao buscar publicações:", e);
-    }
+/**
+ * Escreve o resultado no Card correspondente
+ */
+function atualizarCard(cardElement, total, legenda) {
+    if (!cardElement) return;
+    const numEl = cardElement.querySelector(".stat-number");
+    const descEl = cardElement.querySelector(".stat-description");
 
-    // 4. Serviços
-    try {
-        const { count, error } = await supabaseClient
-            .from("servicos")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", userId);
+    if (numEl) numEl.textContent = total;
+    if (descEl) descEl.textContent = legenda;
+}
 
-        if (!error && count !== null) {
-            const numEl = statServicos.querySelector(".stat-number");
-            const descEl = statServicos.querySelector(".stat-description");
-            numEl.textContent = count;
-            descEl.textContent = count === 1 ? "1 serviço cadastrado" : `${count} serviços cadastrados`;
-        }
-    } catch (e) {
-        console.warn("Erro ao buscar serviços:", e);
+/**
+ * Atualiza o indicador de status do negócio
+ */
+function atualizarStatusNegocio(negocioId, servicos, publicacoes) {
+    if (!statusIndicator || !statusTitle || !statusDesc) return;
+
+    if (negocioId && servicos > 0) {
+        statusIndicator.style.background = "#10B981"; // Verde
+        statusTitle.textContent = "Negócio Ativo e Pronto";
+        statusDesc.textContent = "Seu perfil e serviços estão visíveis para receber agendamentos.";
+    } else if (negocioId) {
+        statusIndicator.style.background = "#F59E0B"; // Amarelo
+        statusTitle.textContent = "Cadastre seus Serviços";
+        statusDesc.textContent = "Seu negócio foi criado, mas adicione serviços para liberar agendamentos.";
+    } else {
+        statusIndicator.style.background = "#EF4444"; // Vermelho
+        statusTitle.textContent = "Perfil em configuração";
+        statusDesc.textContent = "Complete as informações do seu negócio para começar.";
     }
 }
 
-/* -------------------------------------------------------------
- * EVENTOS (LOGOUT E MENU MOBILE)
- * ----------------------------------------------------------- */
-
-// Logout
+/* EVENTOS */
 if (logoutButton) {
-    logoutButton.addEventListener("click", async function () {
+    logoutButton.addEventListener("click", async () => {
         logoutButton.disabled = true;
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) {
-            console.error("Erro ao sair:", error);
-            logoutButton.disabled = false;
-            return;
-        }
+        await client.auth.signOut();
         window.location.href = "login.html";
     });
 }
 
-// Menu Mobile
-const mobileMenuButton = document.getElementById("mobile-menu-button");
-const sidebar = document.getElementById("sidebar");
+const mobileMenuBtn = document.getElementById("mobile-menu-button");
+const sidebarEl = document.getElementById("sidebar");
 
-if (mobileMenuButton && sidebar) {
-    mobileMenuButton.addEventListener("click", function () {
-        sidebar.classList.toggle("mobile-open");
+if (mobileMenuBtn && sidebarEl) {
+    mobileMenuBtn.addEventListener("click", () => {
+        sidebarEl.classList.toggle("mobile-open");
     });
 
-    document.querySelectorAll(".nav-item").forEach(function (item) {
-        item.addEventListener("click", function () {
-            sidebar.classList.remove("mobile-open");
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+            sidebarEl.classList.remove("mobile-open");
         });
     });
 }
 
-// Inicia o painel
+// Inicia a execução
 carregarPainel();
