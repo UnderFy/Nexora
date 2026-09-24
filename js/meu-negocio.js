@@ -196,10 +196,7 @@ async function carregarNegocio() {
         await supabaseClient
             .from("negocios")
             .select("*")
-            .eq(
-                "id",
-                usuarioAtual.id
-            )
+            .or(`id.eq.${usuarioAtual.id},usuario_id.eq.${usuarioAtual.id}`)
             .maybeSingle();
 
 
@@ -446,6 +443,9 @@ form.addEventListener(
             const dadosNegocio = {
 
                 id:
+                    usuarioAtual.id,
+
+                usuario_id:
                     usuarioAtual.id,
 
                 nome:
