@@ -6,7 +6,14 @@ const headerAvatar = document.getElementById("header-avatar");
 const logoutButton = document.getElementById("logout-button");
 const listaAgendamentos = document.getElementById("lista-agendamentos");
 
+const filtroDataInput = document.getElementById("filtro-data");
+const limparDataBtn = document.getElementById("limpar-data");
+const botoesFiltroStatus = document.querySelectorAll(".btn-filtro");
+
 let negocioId = null;
+let todosAgendamentos = [];
+let filtroStatusAtual = "todos";
+let filtroDataAtual = "";
 
 async function carregarAgenda() {
     try {
@@ -31,16 +38,16 @@ async function carregarAgenda() {
         const nome = perfil.nome || "Empreendedor";
         const inicial = nome.trim().charAt(0).toUpperCase() || "N";
 
-        sidebarName.textContent = nome;
-        sidebarAvatar.textContent = inicial;
-        headerAvatar.textContent = inicial;
+        if (sidebarName) sidebarName.textContent = nome;
+        if (sidebarAvatar) sidebarAvatar.textContent = inicial;
+        if (headerAvatar) headerAvatar.textContent = inicial;
 
         // 3. Busca o ID do Negócio associado ao usuário
         const { data: negocio, error: negocioError } = await supabaseClient
             .from("negocios")
             .select("id")
-            .eq("id", user.id)
-            .single();
+            .or(`id.eq.${user.id},usuario_id.eq.${user.id}`)
+            .maybeSingle();
 
         if (negocioError || !negocio) {
             listaAgendamentos.innerHTML = `
@@ -53,6 +60,9 @@ async function carregarAgenda() {
         }
 
         negocioId = negocio.id;
+
+        // Configura ouvintes dos filtros
+        configurarFiltros();
 
         // 4. Busca os agendamentos cadastrados
         await buscarAgendamentos();
@@ -84,68 +94,168 @@ async function buscarAgendamentos() {
 
         if (error) throw error;
 
+        todosAgendamentos = agendamentos || [];
+
         // Atualiza Contadores
-        const hojeData = new Date().toISOString().split("T")[0];
-        document.getElementById("total-hoje").textContent = agendamentos.filter(a => a.data_agendamento === hojeData).length;
-        document.getElementById("total-pendentes").textContent = agendamentos.filter(a => a.status === "pendente").length;
-        document.getElementById("total-confirmados").textContent = agendamentos.filter(a => a.status === "confirmado").length;
-        document.getElementById("total-concluidos").textContent = agendamentos.filter(a => a.status === "concluido").length;
+        atualizarMetricas();
 
-        // Renderiza Lista
-        if (!agendamentos || agendamentos.length === 0) {
-            listaAgendamentos.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
-                    <p>Nenhum agendamento encontrado.</p>
-                </div>
-            `;
-            return;
-        }
-
-        listaAgendamentos.innerHTML = agendamentos.map(item => `
-            <div class="quick-action" style="justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <span class="quick-icon blue">◷</span>
-                    <div>
-                        <strong>${item.cliente_nome} (${item.cliente_telefone})</strong>
-                        <small>
-                            ${formatarData(item.data_agendamento)} às ${item.hora_inicio.slice(0, 5)} 
-                            | Serviço: ${item.servicos?.nome || "Geral"}
-                        </small>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; ${getBadgeStyle(item.status)}">
-                        ${item.status.toUpperCase()}
-                    </span>
-                    ${item.status === 'pendente' ? `
-                        <button onclick="alterarStatus('${item.id}', 'confirmado')" class="primary-button" style="padding: 6px 12px; font-size: 11px;">Confirmar</button>
-                    ` : ''}
-                    ${item.status === 'confirmado' ? `
-                        <button onclick="alterarStatus('${item.id}', 'concluido')" class="secondary-button" style="padding: 6px 12px; font-size: 11px; width: auto;">Concluir</button>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
+        // Renderiza Lista aplicando filtros
+        aplicarFiltrosERenderizar();
 
     } catch (err) {
         console.error("Erro ao buscar agendamentos:", err);
+        listaAgendamentos.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                <p>Erro ao carregar agendamentos.</p>
+            </div>
+        `;
     }
 }
 
-async function alterarStatus(id, novoStatus) {
-    const { error } = await supabaseClient
-        .from("agendamentos")
-        .update({ status: novoStatus })
-        .eq("id", id);
+function atualizarMetricas() {
+    const hojeData = new Date().toISOString().split("T")[0];
+    
+    document.getElementById("total-hoje").textContent = 
+        todosAgendamentos.filter(a => a.data_agendamento === hojeData).length;
 
-    if (error) {
-        alert("Erro ao atualizar agendamento.");
-    } else {
-        buscarAgendamentos();
+    document.getElementById("total-pendentes").textContent = 
+        todosAgendamentos.filter(a => a.status === "pendente").length;
+
+    document.getElementById("total-confirmados").textContent = 
+        todosAgendamentos.filter(a => a.status === "confirmado").length;
+
+    document.getElementById("total-concluidos").textContent = 
+        todosAgendamentos.filter(a => a.status === "concluido").length;
+}
+
+function configurarFiltros() {
+    // Filtro por botões de status
+    botoesFiltroStatus.forEach(btn => {
+        btn.addEventListener("click", () => {
+            botoesFiltroStatus.forEach(b => {
+                b.style.background = "#fff";
+                b.style.color = "#333";
+            });
+            btn.style.background = "#000";
+            btn.style.color = "#fff";
+
+            filtroStatusAtual = btn.dataset.status;
+            aplicarFiltrosERenderizar();
+        });
+    });
+
+    // Filtro por Data
+    if (filtroDataInput) {
+        filtroDataInput.addEventListener("change", (e) => {
+            filtroDataAtual = e.target.value;
+            aplicarFiltrosERenderizar();
+        });
+    }
+
+    if (limparDataBtn) {
+        limparDataBtn.addEventListener("click", () => {
+            if (filtroDataInput) filtroDataInput.value = "";
+            filtroDataAtual = "";
+            aplicarFiltrosERenderizar();
+        });
+    }
+}
+
+function aplicarFiltrosERenderizar() {
+    let filtrados = todosAgendamentos;
+
+    // 1. Aplica Filtro de Status
+    if (filtroStatusAtual !== "todos") {
+        filtrados = filtrados.filter(item => item.status === filtroStatusAtual);
+    }
+
+    // 2. Aplica Filtro de Data
+    if (filtroDataAtual) {
+        filtrados = filtrados.filter(item => item.data_agendamento === filtroDataAtual);
+    }
+
+    // 3. Renderiza o resultado
+    if (!filtrados || filtrados.length === 0) {
+        listaAgendamentos.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                <p>Nenhum agendamento encontrado para os filtros selecionados.</p>
+            </div>
+        `;
+        return;
+    }
+
+    listaAgendamentos.innerHTML = filtrados.map(item => {
+        const servicoNome = item.servicos?.nome || "Serviço Geral";
+        const preco = item.servicos?.preco ? ` - R$ ${parseFloat(item.servicos.preco).toFixed(2)}` : "";
+        
+        return `
+            <div class="quick-action" style="justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #f1f5f9;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <span class="quick-icon blue">◷</span>
+                    <div>
+                        <strong>${item.cliente_nome}</strong> 
+                        ${item.cliente_telefone ? `<span style="font-size: 12px; color: var(--text-secondary);">(${item.cliente_telefone})</span>` : ''}
+                        <br>
+                        <small style="color: var(--text-secondary);">
+                            📅 <strong>${formatarData(item.data_agendamento)}</strong> às <strong>${item.hora_inicio ? item.hora_inicio.slice(0, 5) : '--:--'}</strong> 
+                            | 🏷️ ${servicoNome}${preco}
+                        </small>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; ${getBadgeStyle(item.status)}">
+                        ${item.status ? item.status.toUpperCase() : 'PENDENTE'}
+                    </span>
+                    
+                    ${item.status === 'pendente' ? `
+                        <button onclick="alterarStatus('${item.id}', 'confirmado')" class="primary-button" style="padding: 6px 12px; font-size: 11px; width: auto;">Confirmar</button>
+                        <button onclick="alterarStatus('${item.id}', 'cancelado')" class="secondary-button" style="padding: 6px 12px; font-size: 11px; width: auto; color: #dc2626; border-color: #fca5a5;">Cancelar</button>
+                    ` : ''}
+
+                    ${item.status === 'confirmado' ? `
+                        <button onclick="alterarStatus('${item.id}', 'concluido')" class="secondary-button" style="padding: 6px 12px; font-size: 11px; width: auto;">Concluir</button>
+                        <button onclick="alterarStatus('${item.id}', 'cancelado')" class="secondary-button" style="padding: 6px 12px; font-size: 11px; width: auto; color: #dc2626; border-color: #fca5a5;">Cancelar</button>
+                    ` : ''}
+
+                    ${item.status === 'concluido' || item.status === 'cancelado' ? `
+                        <button onclick="alterarStatus('${item.id}', 'pendente')" class="secondary-button" style="padding: 4px 8px; font-size: 10px; width: auto; opacity: 0.7;" title="Reabrir agendamento">Reabrir</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function alterarStatus(id, novoStatus) {
+    try {
+        const { error } = await supabaseClient
+            .from("agendamentos")
+            .update({ status: novoStatus })
+            .eq("id", id);
+
+        if (error) {
+            throw error;
+        }
+
+        // Atualiza o item na lista local para resposta instantânea
+        const agendamento = todosAgendamentos.find(a => a.id === id);
+        if (agendamento) {
+            agendamento.status = novoStatus;
+        }
+
+        // Atualiza os contadores e a renderização
+        atualizarMetricas();
+        aplicarFiltrosERenderizar();
+
+    } catch (err) {
+        console.error("Erro ao alterar status:", err);
+        alert("Erro ao atualizar o status do agendamento: " + (err?.message || err));
     }
 }
 
 function formatarData(dataIso) {
+    if (!dataIso) return "";
     const [ano, mes, dia] = dataIso.split("-");
     return `${dia}/${mes}/${ano}`;
 }
