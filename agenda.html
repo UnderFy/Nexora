@@ -139,11 +139,28 @@
                     </div>
                 </div>
 
-                <!-- LISTA DE AGENDAMENTOS -->
+                                <!-- LISTA DE AGENDAMENTOS -->
                 <div class="dashboard-card">
-                    <div class="card-header">
-                        <h2>Próximos Agendamentos</h2>
-                        <p>Acompanhe e atualize os horários marcados pelos seus clientes.</p>
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h2>Próximos Agendamentos</h2>
+                            <p>Acompanhe e atualize os horários marcados pelos seus clientes.</p>
+                        </div>
+                        
+                        <!-- FILTRO POR DATA -->
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="date" id="filtro-data" style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 13px;">
+                            <button type="button" id="limpar-data" class="secondary-button" style="padding: 8px 12px; font-size: 12px; width: auto;">Todas as datas</button>
+                        </div>
+                    </div>
+
+                    <!-- BOTÕES DE FILTRO DE STATUS -->
+                    <div id="filtros-status" style="display: flex; gap: 8px; margin: 16px 0; overflow-x: auto; padding-bottom: 4px;">
+                        <button type="button" class="btn-filtro" data-status="todos" style="padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #000; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer;">Todos</button>
+                        <button type="button" class="btn-filtro" data-status="pendente" style="padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; color: #333; font-size: 12px; font-weight: 600; cursor: pointer;">Pendentes</button>
+                        <button type="button" class="btn-filtro" data-status="confirmado" style="padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; color: #333; font-size: 12px; font-weight: 600; cursor: pointer;">Confirmados</button>
+                        <button type="button" class="btn-filtro" data-status="concluido" style="padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; color: #333; font-size: 12px; font-weight: 600; cursor: pointer;">Concluídos</button>
+                        <button type="button" class="btn-filtro" data-status="cancelado" style="padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; color: #333; font-size: 12px; font-weight: 600; cursor: pointer;">Cancelados</button>
                     </div>
 
                     <div id="lista-agendamentos" class="quick-actions">
@@ -153,9 +170,6 @@
                     </div>
                 </div>
 
-            </section>
-        </main>
-    </div>
 
     <!-- SCRIPTS -->
     <script src="js/supabase.js"></script>
