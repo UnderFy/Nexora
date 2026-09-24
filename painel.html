@@ -2,883 +2,250 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel | Nexora</title>
-
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 
     <!-- Supabase -->
-    <script
-        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    ></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body class="dashboard-body">
 
-    <!-- =========================
-         ESTRUTURA PRINCIPAL
-    ========================== -->
-
     <div class="dashboard-layout">
 
-
-        <!-- =========================
-             MENU LATERAL
-        ========================== -->
-
+        <!-- MENU LATERAL -->
         <aside class="sidebar" id="sidebar">
-
             <div class="sidebar-top">
-
-                <a
-                    href="painel.html"
-                    class="brand"
-                >
-
+                <a href="painel.html" class="brand">
                     <span class="brand-symbol">N</span>
-
-                    <span class="brand-name">
-                        Nexora
-                    </span>
-
+                    <span class="brand-name">Nexora</span>
                 </a>
 
-
                 <nav class="sidebar-nav">
+                    <p class="nav-title">PRINCIPAL</p>
 
-                    <p class="nav-title">
-                        PRINCIPAL
-                    </p>
-
-                    <a
-                        href="painel.html"
-                        class="nav-item active"
-                    >
+                    <a href="painel.html" class="nav-item active">
                         <span class="nav-icon">⌂</span>
                         <span>Painel</span>
                     </a>
 
-                    <a
-                        href="agenda.html"
-                        class="nav-item"
-                    >
+                    <a href="agenda.html" class="nav-item">
                         <span class="nav-icon">▣</span>
                         <span>Agenda</span>
                     </a>
 
-                    <a
-                        href="publicacoes.html"
-                        class="nav-item"
-                    >
+                    <a href="publicacoes.html" class="nav-item">
                         <span class="nav-icon">▤</span>
                         <span>Publicações</span>
                     </a>
 
-                    <a
-                        href="servicos.html"
-                        class="nav-item"
-                    >
+                    <a href="servicos.html" class="nav-item">
                         <span class="nav-icon">◇</span>
                         <span>Serviços</span>
                     </a>
 
+                    <p class="nav-title">NEGÓCIO</p>
 
-                    <p class="nav-title">
-                        <span>NEGÓCIO</span>
-                    </p>
-
-                    <a
-                        href="clientes.html"
-                        class="nav-item"
-                    >
+                    <a href="clientes.html" class="nav-item">
                         <span class="nav-icon">♙</span>
                         <span>Clientes</span>
                     </a>
 
-                    <a
-                        href="#"
-                        class="nav-item"
-                    >
+                    <a href="pagamentos.html" class="nav-item">
                         <span class="nav-icon">R$</span>
                         <span>Pagamentos</span>
                     </a>
 
-                    <a
-                        href="meu-negocio.html"
-                        class="nav-item"
-                    >
+                    <a href="meu-negocio.html" class="nav-item">
                         <span class="nav-icon">□</span>
                         <span>Meu negócio</span>
                     </a>
-                    <a
-                        href="#"
-                        class="nav-item"
-                    >
-                        <span class="nav-icon">☻</span>
 
+                    <p class="nav-title">CONTA</p>
 
-                    <p class="nav-title">
-                        <span>CONTA</span>
-                    </p>
-
-                    <a
-                        href="#"
-                        class="nav-item"
-                    >
+                    <a href="configuracoes.html" class="nav-item">
                         <span class="nav-icon">⚙</span>
                         <span>Configurações</span>
                     </a>
-
                 </nav>
-
             </div>
-
 
             <!-- USUÁRIO DO MENU -->
-
             <div class="sidebar-user">
-
-                <div class="user-avatar" id="sidebar-avatar">
-                    N
-                </div>
-
+                <div class="user-avatar" id="sidebar-avatar">N</div>
                 <div class="user-info">
-
-                    <strong id="sidebar-name">
-                        Carregando...
-                    </strong>
-
-                    <span>
-                        Empreendedor
-                    </span>
-
+                    <strong id="sidebar-name">Carregando...</strong>
+                    <span>Empreendedor</span>
                 </div>
-
-                <button
-                    type="button"
-                    class="logout-icon"
-                    id="logout-button"
-                    title="Sair"
-                >
+                <button type="button" class="logout-icon" id="logout-button" title="Sair">
                     ↪
                 </button>
-
             </div>
-
         </aside>
 
-
-        <!-- =========================
-             ÁREA PRINCIPAL
-        ========================== -->
-
+        <!-- ÁREA PRINCIPAL -->
         <main class="dashboard-main">
 
-
             <!-- CABEÇALHO -->
-
             <header class="dashboard-header">
-
-                <button
-                    type="button"
-                    class="mobile-menu-button"
-                    id="mobile-menu-button"
-                    aria-label="Abrir menu"
-                >
+                <button type="button" class="mobile-menu-button" id="mobile-menu-button" aria-label="Abrir menu">
                     ☰
                 </button>
 
-
                 <div class="header-left">
-
-                    <span class="header-label">
-                        Painel
-                    </span>
-
+                    <span class="header-label">Painel</span>
                 </div>
-
 
                 <div class="header-right">
-
-                    <button
-                        type="button"
-                        class="notification-button"
-                        title="Notificações"
-                    >
+                    <button type="button" class="notification-button" title="Notificações">
                         ♢
                     </button>
-
-                    <div
-                        class="header-avatar"
-                        id="header-avatar"
-                    >
-                        N
-                    </div>
-
+                    <div class="header-avatar" id="header-avatar">N</div>
                 </div>
-
             </header>
 
-
             <!-- CONTEÚDO -->
-
             <section class="dashboard-content">
 
-
                 <!-- SAUDAÇÃO -->
-
                 <div class="welcome-section">
-
                     <div>
-
-                        <p class="welcome-small">
-                            Visão geral do seu negócio
-                        </p>
-
-                        <h1>
-                            Olá,
-                            <span id="welcome-name">
-                                empreendedor
-                            </span>.
-                        </h1>
-
+                        <p class="welcome-small">Visão geral do seu negócio</p>
+                        <h1>Olá, <span id="welcome-name">empreendedor</span>.</h1>
                         <p class="welcome-description">
-                            Acompanhe seu negócio e gerencie
-                            tudo em um só lugar.
+                            Acompanhe seu negócio e gerencie tudo em um só lugar.
                         </p>
-
                     </div>
 
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
+                    <a href="publicacoes.html" class="primary-button" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                         + Nova publicação
-                    </button>
-
+                    </a>
                 </div>
 
-
-                <!-- =========================
-                     CARDS DE RESUMO
-                ========================== -->
-
+                <!-- CARDS DE RESUMO -->
                 <div class="stats-grid">
-
-
                     <div class="stat-card">
-
                         <div class="stat-top">
-
-                            <span class="stat-title">
-                                Agendamentos
-                            </span>
-
-                            <span class="stat-icon blue">
-                                ◷
-                            </span>
-
+                            <span class="stat-title">Agendamentos</span>
+                            <span class="stat-icon blue">◷</span>
                         </div>
-
-                        <strong class="stat-number">
-                            0
-                        </strong>
-
-                        <span class="stat-description">
-                            Nenhum agendamento ainda
-                        </span>
-
+                        <strong class="stat-number">0</strong>
+                        <span class="stat-description">Carregando...</span>
                     </div>
 
-
                     <div class="stat-card">
-
                         <div class="stat-top">
-
-                            <span class="stat-title">
-                                Clientes
-                            </span>
-
-                            <span class="stat-icon purple">
-                                ♙
-                            </span>
-
+                            <span class="stat-title">Clientes</span>
+                            <span class="stat-icon purple">♙</span>
                         </div>
-
-                        <strong class="stat-number">
-                            0
-                        </strong>
-
-                        <span class="stat-description">
-                            Clientes cadastrados
-                        </span>
-
+                        <strong class="stat-number">0</strong>
+                        <span class="stat-description">Carregando...</span>
                     </div>
 
-
                     <div class="stat-card">
-
                         <div class="stat-top">
-
-                            <span class="stat-title">
-                                Publicações
-                            </span>
-
-                            <span class="stat-icon blue">
-                                ▤
-                            </span>
-
+                            <span class="stat-title">Publicações</span>
+                            <span class="stat-icon blue">▤</span>
                         </div>
-
-                        <strong class="stat-number">
-                            0
-                        </strong>
-
-                        <span class="stat-description">
-                            Conteúdos publicados
-                        </span>
-
+                        <strong class="stat-number">0</strong>
+                        <span class="stat-description">Carregando...</span>
                     </div>
 
-
                     <div class="stat-card">
-
                         <div class="stat-top">
-
-                            <span class="stat-title">
-                                Serviços
-                            </span>
-
-                            <span class="stat-icon purple">
-                                ◇
-                            </span>
-
+                            <span class="stat-title">Serviços</span>
+                            <span class="stat-icon purple">◇</span>
                         </div>
-
-                        <strong class="stat-number">
-                            0
-                        </strong>
-
-                        <span class="stat-description">
-                            Serviços cadastrados
-                        </span>
-
+                        <strong class="stat-number">0</strong>
+                        <span class="stat-description">Carregando...</span>
                     </div>
-
                 </div>
 
-
-                <!-- =========================
-                     PARTE INFERIOR
-                ========================== -->
-
+                <!-- PARTE INFERIOR -->
                 <div class="dashboard-columns">
 
-
                     <!-- AÇÕES RÁPIDAS -->
-
                     <div class="dashboard-card">
-
                         <div class="card-header">
-
                             <div>
-
-                                <h2>
-                                    Ações rápidas
-                                </h2>
-
-                                <p>
-                                    Comece a configurar seu negócio.
-                                </p>
-
+                                <h2>Ações rápidas</h2>
+                                <p>Comece a configurar seu negócio.</p>
                             </div>
-
                         </div>
-
 
                         <div class="quick-actions">
-
-
-                            <a
-                                href="#"
-                                class="quick-action"
-                            >
-
-                                <span class="quick-icon blue">
-                                    ◷
-                                </span>
-
+                            <a href="agenda.html" class="quick-action">
+                                <span class="quick-icon blue">◷</span>
                                 <span>
-
-                                    <strong>
-                                        Configurar agenda
-                                    </strong>
-
-                                    <small>
-                                        Defina seus horários
-                                    </small>
-
+                                    <strong>Configurar agenda</strong>
+                                    <small>Defina seus horários</small>
                                 </span>
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
+                                <span class="quick-arrow">→</span>
                             </a>
 
-
-                            <a
-                                href="#"
-                                class="quick-action"
-                            >
-
-                                <span class="quick-icon purple">
-                                    ◇
-                                </span>
-
+                            <a href="servicos.html" class="quick-action">
+                                <span class="quick-icon purple">◇</span>
                                 <span>
-
-                                    <strong>
-                                        Adicionar serviço
-                                    </strong>
-
-                                    <small>
-                                        Cadastre seus serviços
-                                    </small>
-
+                                    <strong>Adicionar serviço</strong>
+                                    <small>Cadastre seus serviços</small>
                                 </span>
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
+                                <span class="quick-arrow">→</span>
                             </a>
 
-
-                            <a
-                                href="#"
-                                class="quick-action"
-                            >
-
-                                <span class="quick-icon blue">
-                                    □
-                                </span>
-
+                            <a href="meu-negocio.html" class="quick-action">
+                                <span class="quick-icon blue">□</span>
                                 <span>
-
-                                    <strong>
-                                        Configurar negócio
-                                    </strong>
-
-                                    <small>
-                                        Complete seu perfil
-                                    </small>
-
+                                    <strong>Configurar negócio</strong>
+                                    <small>Complete seu perfil</small>
                                 </span>
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
+                                <span class="quick-arrow">→</span>
                             </a>
-
-
                         </div>
-
                     </div>
-
 
                     <!-- STATUS DO NEGÓCIO -->
-
                     <div class="dashboard-card business-status-card">
-
                         <div class="card-header">
-
                             <div>
-
-                                <h2>
-                                    Seu negócio
-                                </h2>
-
-                                <p>
-                                    Status do seu perfil.
-                                </p>
-
+                                <h2>Seu negócio</h2>
+                                <p>Status do seu perfil.</p>
                             </div>
-
                         </div>
-
 
                         <div class="business-status">
-
                             <div class="status-indicator"></div>
-
                             <div>
-
-                                <strong>
-                                    Perfil em configuração
-                                </strong>
-
-                                <p>
-                                    Complete as informações do
-                                    seu negócio para começar.
-                                </p>
-
+                                <strong>Verificando status...</strong>
+                                <p>Carregando informações do seu negócio.</p>
                             </div>
-
                         </div>
 
-
-                        <button
-                            type="button"
-                            class="secondary-button"
-                        >
+                        <a href="meu-negocio.html" class="secondary-button" style="text-decoration: none; text-align: center; display: block;">
                             Configurar meu negócio
-                        </button>
-
+                        </a>
                     </div>
 
                 </div>
 
-
-                <!-- =========================
-                     BLOCO INICIAL
-                ========================== -->
-
+                <!-- BLOCO INICIAL -->
                 <div class="empty-dashboard">
-
-                    <div class="empty-icon">
-                        N
-                    </div>
-
-                    <h2>
-                        Seu espaço no Nexora começa aqui
-                    </h2>
-
-                    <p>
-                        Configure seu negócio, adicione seus
-                        serviços e comece a receber clientes.
-                    </p>
-
-                    <button
-                        type="button"
-                        class="primary-button"
-                    >
+                    <div class="empty-icon">N</div>
+                    <h2>Seu espaço no Nexora começa aqui</h2>
+                    <p>Configure seu negócio, adicione seus serviços e comece a receber clientes.</p>
+                    <a href="meu-negocio.html" class="primary-button" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
                         Começar configuração
-                    </button>
-
+                    </a>
                 </div>
-
 
             </section>
-
         </main>
-
     </div>
 
-
-    <!-- =========================
-         SUPABASE
-    ========================== -->
-
+    <!-- SCRIPTS -->
     <script src="js/supabase.js"></script>
-
-
-    <!-- =========================
-         PAINEL
-    ========================== -->
-
-    <script>
-
-        const welcomeName =
-            document.getElementById("welcome-name");
-
-        const sidebarName =
-            document.getElementById("sidebar-name");
-
-        const sidebarAvatar =
-            document.getElementById("sidebar-avatar");
-
-        const headerAvatar =
-            document.getElementById("header-avatar");
-
-        const logoutButton =
-            document.getElementById("logout-button");
-
-
-        async function carregarPainel() {
-
-            try {
-
-                /*
-                 * Verifica o usuário autenticado
-                 */
-
-                const {
-                    data: authData,
-                    error: authError
-                } = await supabaseClient.auth.getUser();
-
-
-                if (authError) {
-                    throw authError;
-                }
-
-
-                const user = authData.user;
-
-
-                /*
-                 * Se não estiver logado,
-                 * volta para o login.
-                 */
-
-                if (!user) {
-
-                    window.location.href =
-                        "login.html";
-
-                    return;
-
-                }
-
-
-                /*
-                 * Busca o perfil do usuário
-                 */
-
-                const {
-                    data: perfil,
-                    error: perfilError
-                } = await supabaseClient
-                    .from("perfis")
-                    .select("nome, username, tipo, foto_url")
-                    .eq("id", user.id)
-                    .limit(1);
-
-
-                if (perfilError) {
-                    throw perfilError;
-                }
-
-
-                if (
-                    !perfil ||
-                    perfil.length === 0
-                ) {
-
-                    throw new Error(
-                        "Perfil não encontrado."
-                    );
-
-                }
-
-
-                const dadosPerfil = perfil[0];
-
-
-                /*
-                 * Verifica o tipo da conta
-                 */
-
-                if (
-                    dadosPerfil.tipo !==
-                    "empreendedor"
-                ) {
-
-                    window.location.href =
-                        "login.html";
-
-                    return;
-
-                }
-
-
-                /*
-                 * Nome
-                 */
-
-                const nome =
-                    dadosPerfil.nome ||
-                    "Empreendedor";
-
-
-                welcomeName.textContent =
-                    nome.split(" ")[0];
-
-                sidebarName.textContent =
-                    nome;
-
-
-                /*
-                 * Primeira letra do nome
-                 */
-
-                const inicial =
-                    nome
-                        .trim()
-                        .charAt(0)
-                        .toUpperCase() || "N";
-
-
-                sidebarAvatar.textContent =
-                    inicial;
-
-                headerAvatar.textContent =
-                    inicial;
-
-
-            } catch (error) {
-
-                console.error(
-                    "Erro ao carregar painel:",
-                    error
-                );
-
-                /*
-                 * Se houver erro de sessão,
-                 * volta para o login.
-                 */
-
-                if (
-                    error?.message
-                        ?.toLowerCase()
-                        .includes("jwt")
-                ) {
-
-                    window.location.href =
-                        "login.html";
-
-                    return;
-
-                }
-
-                welcomeName.textContent =
-                    "empreendedor";
-
-                sidebarName.textContent =
-                    "Empreendedor";
-
-            }
-
-        }
-
-
-        /*
-         * LOGOUT
-         */
-
-        logoutButton.addEventListener(
-            "click",
-            async function () {
-
-                logoutButton.disabled = true;
-
-                const {
-                    error
-                } =
-                    await supabaseClient.auth.signOut();
-
-
-                if (error) {
-
-                    console.error(
-                        "Erro ao sair:",
-                        error
-                    );
-
-                    logoutButton.disabled =
-                        false;
-
-                    return;
-
-                }
-
-
-                window.location.href =
-                    "login.html";
-
-            }
-        );
-
-
-        /*
-         * MENU MOBILE
-         */
-
-        const mobileMenuButton =
-            document.getElementById(
-                "mobile-menu-button"
-            );
-
-        const sidebar =
-            document.getElementById("sidebar");
-
-
-        mobileMenuButton.addEventListener(
-            "click",
-            function () {
-
-                sidebar.classList.toggle(
-                    "mobile-open"
-                );
-
-            }
-        );
-
-
-        /*
-         * Fecha menu ao clicar em um item
-         * no celular.
-         */
-
-        document
-            .querySelectorAll(".nav-item")
-            .forEach(function (item) {
-
-                item.addEventListener(
-                    "click",
-                    function () {
-
-                        sidebar.classList.remove(
-                            "mobile-open"
-                        );
-
-                    }
-                );
-
-            });
-
-
-        /*
-         * Inicia o painel
-         */
-
-        carregarPainel();
-
-    </script>
-    <!-- =========================
-         SUPABASE E LÓGICA DO PAINEL
-    ========================== -->
-    <script src="js/supabase.js"></script>
-    <script src="js/painel.js?v=6"></script>
-    
-</body>
-</html>
-
-
+    <script src="js/painel.js"></script>
 </body>
 
 </html>
