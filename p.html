@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento | Nexora</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body.public-body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .public-container {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .public-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .business-header-banner {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            height: 100px;
+            position: relative;
+        }
+
+        .business-profile-info {
+            padding: 0 20px 20px 20px;
+            position: relative;
+            margin-top: -40px;
+        }
+
+        .business-avatar-large {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            background: #ffffff;
+            color: #4f46e5;
+            font-size: 28px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 3px solid #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .service-selection-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-selection-card:hover, .service-selection-card.selected {
+            border-color: #4f46e5;
+            background-color: #f5f3ff;
+        }
+
+        .service-selection-card input[type="radio"] {
+            accent-color: #4f46e5;
+            width: 18px;
+            height: 18px;
+        }
+
+        .step-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin: 20px 0 10px 0;
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .time-slot-btn {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .time-slot-btn:hover, .time-slot-btn.active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+
+        .success-box {
+            text-align: center;
+            padding: 32px 20px;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #dcfce7;
+            color: #16a34a;
+            font-size: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+    </style>
+</head>
+
+<body class="public-body">
+
+    <div class="public-container">
+
+        <!-- ESTADO DE CARREGAMENTO -->
+        <div id="loading-state" class="public-card" style="padding: 40px; text-align: center;">
+            <p style="color: #64748b;">Carregando informações do negócio...</p>
+        </div>
+
+        <!-- MENSAGEM DE ERRO (CASO NEGÓCIO NÃO EXISTA) -->
+        <div id="error-state" class="public-card" style="display: none; padding: 40px; text-align: center;">
+            <h2 style="color: #ef4444; margin-bottom: 8px;">Negócio não encontrado</h2>
+            <p style="color: #64748b;">Verifique o link digitado e tente novamente.</p>
+        </div>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <div id="public-content" class="public-card" style="display: none;">
+
+            <!-- CABEÇALHO DO NEGÓCIO -->
+            <div class="business-header-banner"></div>
+            <div class="business-profile-info">
+                <div class="business-avatar-large" id="biz-avatar">N</div>
+                <h1 id="biz-name" style="font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Nome do Negócio</h1>
+                <p id="biz-location" style="font-size: 13px; color: #64748b; margin-bottom: 8px;">📍 Cidade / Endereço</p>
+                <p id="biz-description" style="font-size: 14px; color: #334155; line-height: 1.4;"></p>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;">
+
+            <!-- FORMULÁRIO DE AGENDAMENTO -->
+            <div style="padding: 20px;" id="booking-section">
+
+                <form id="form-agendamento-publico">
+
+                    <!-- PASSO 1: SERVIÇO -->
+                    <p class="step-title">1. Selecione o Serviço</p>
+                    <div id="services-list">
+                        <p style="color: #94a3b8; font-size: 13px;">Carregando serviços disponíveis...</p>
+                    </div>
+
+                    <!-- PASSO 2: DATA E HORÁRIO -->
+                    <p class="step-title">2. Escolha Data e Horário</p>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="booking-date" style="font-size: 12px; font-weight: 600; color: #475569;">Data do Agendamento *</label>
+                            <input type="date" id="booking-date" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 12px; font-weight: 600; color: #475569;">Horários Disponíveis *</label>
+                            <div class="time-slots-grid" id="time-slots">
+                                <div class="time-slot-btn" data-time="08:00">08:00</div>
+                                <div class="time-slot-btn" data-time="09:00">09:00</div>
+                                <div class="time-slot-btn" data-time="10:00">10:00</div>
+                                <div class="time-slot-btn" data-time="11:00">11:00</div>
+                                <div class="time-slot-btn" data-time="13:00">13:00</div>
+                                <div class="time-slot-btn" data-time="14:00">14:00</div>
+                                <div class="time-slot-btn" data-time="15:00">15:00</div>
+                                <div class="time-slot-btn" data-time="16:00">16:00</div>
+                                <div class="time-slot-btn" data-time="17:00">17:00</div>
+                                <div class="time-slot-btn" data-time="18:00">18:00</div>
+                            </div>
+                            <input type="hidden" id="booking-time" required>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 3: SEUS DADOS -->
+                    <p class="step-title">3. Seus Dados</p>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="client-name" style="font-size: 12px; font-weight: 600; color: #475569;">Seu Nome Completo *</label>
+                        <input type="text" id="client-name" placeholder="Ex: Maria Silva" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="client-phone" style="font-size: 12px; font-weight: 600; color: #475569;">Seu WhatsApp / Telefone *</label>
+                        <input type="tel" id="client-phone" placeholder="Ex: (27) 99999-9999" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+
+                    <div id="booking-error-msg" style="display: none; color: #ef4444; font-size: 13px; margin-bottom: 12px; text-align: center;"></div>
+
+                    <button type="submit" id="btn-submit-booking" class="primary-button" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border-radius: 10px;">
+                        Confirmar Agendamento
+                    </button>
+                </form>
+
+            </div>
+
+            <!-- TELA DE SUCESSO DO AGENDAMENTO -->
+            <div id="success-section" class="success-box" style="display: none;">
+                <div class="success-icon">✓</div>
+                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Agendamento Confirmado!</h2>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+                    Seu horário foi reservado com sucesso no estabelecimento.
+                </p>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 24px; font-size: 14px;">
+                    <p style="margin-bottom: 6px;"><strong>Serviço:</strong> <span id="summary-service">-</span></p>
+                    <p style="margin-bottom: 6px;"><strong>Data:</strong> <span id="summary-date">-</span></p>
+                    <p style="margin-bottom: 6px;"><strong>Horário:</strong> <span id="summary-time">-</span></p>
+                    <p style="margin-bottom: 0;"><strong>Cliente:</strong> <span id="summary-client">-</span></p>
+                </div>
+
+                <button type="button" onclick="window.location.reload()" class="secondary-button" style="width: 100%; padding: 12px;">
+                    Fazer Novo Agendamento
+                </button>
+            </div>
+
+        </div>
+
+        <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 16px;">
+            Desenvolvido por <strong>Nexora</strong>
+        </p>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/supabase.js"></script>
+    <script src="js/p.js"></script>
+</body>
+
+</html>
