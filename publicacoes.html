@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexora - Portfólio & Publicações</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h2>Meu Portfólio</h2>
+            <p>Poste fotos e vídeos dos seus trabalhos com valor e tempo de realização.</p>
+        </header>
+
+        <!-- Formulário de Nova Publicação -->
+        <section class="card-section">
+            <h3>Nova Publicação</h3>
+            <form id="form-publicacao" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                
+                <div class="form-group">
+                    <label for="post-media">Foto ou Vídeo do Trabalho *</label>
+                    <input type="file" id="post-media" accept="image/*,video/*" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="post-titulo">Título / Nome do Trabalho *</label>
+                    <input type="text" id="post-titulo" placeholder="Ex: Degradê Navalhado + Barba" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="post-servico">Vincular a um Serviço do Catálogo (Opcional)</label>
+                    <select id="post-servico">
+                        <option value="">Nenhum (Apenas exibição)</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label for="post-preco">Valor do Trabalho (R$) *</label>
+                        <input type="number" id="post-preco" step="0.01" placeholder="35.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-tempo">Tempo Gasto (min) *</label>
+                        <input type="number" id="post-tempo" placeholder="45" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="post-descricao">Descrição / Detalhes</label>
+                    <textarea id="post-descricao" rows="3" placeholder="Detalhes dos produtos usados, técnicas..."></textarea>
+                </div>
+
+                <div id="pub-error-msg" style="color: #ef4444; font-size: 13px; display: none;"></div>
+
+                <button type="submit" id="btn-submit-post" class="btn-primary">Publicar no Portfólio</button>
+            </form>
+        </section>
+
+        <!-- Feed de Publicações Cadastradas -->
+        <section class="card-section" style="margin-top: 20px;">
+            <h3>Publicações Ativas</h3>
+            <div id="posts-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+                <p style="color: #64748b; font-size: 13px;">Carregando publicações...</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script src="js/publicacoes.js"></script>
+</body>
+</html>
