@@ -1,4 +1,4 @@
-// Elementos de tela
+// Elementos de ecrã
 const loadingState = document.getElementById("loading-state");
 const errorState = document.getElementById("error-state");
 const publicContent = document.getElementById("public-content");
@@ -73,6 +73,9 @@ async function inicializarPaginaPublica() {
         }
 
         configurarHorarios();
+        
+        // Atualizar horários ocupados para a data inicial
+        await verificarHorariosOcupados();
 
         loadingState.style.display = "none";
         publicContent.style.display = "block";
@@ -120,10 +123,63 @@ function configurarHorarios() {
     const slots = document.querySelectorAll(".time-slot-btn");
     slots.forEach(slot => {
         slot.addEventListener("click", () => {
+            if (slot.disabled) return;
             slots.forEach(s => s.classList.remove("active"));
             slot.classList.add("active");
             bookingTime.value = slot.getAttribute("data-time");
         });
+    });
+
+    // Quando a data muda, reanalisa os horários ocupados
+    bookingDate?.addEventListener("change", verificarHorariosOcupados);
+}
+
+async function verificarHorariosOcupados() {
+    const dataSelecionada = bookingDate.value;
+    if (!dataSelecionada || !negocioId) return;
+
+    const slots = document.querySelectorAll(".time-slot-btn");
+    
+    // Resetar todos os botões antes da verificação
+    slots.forEach(slot => {
+        slot.disabled = false;
+        slot.classList.remove("active", "disabled");
+        slot.style.opacity = "1";
+        slot.style.cursor = "pointer";
+        slot.title = "";
+    });
+    bookingTime.value = "";
+
+    // Buscar agendamentos na base de dados para esta data
+    const { data: agendamentos, error } = await supabaseClient
+        .from("agendamentos")
+        .select("horario, hora_inicio, status")
+        .eq("negocio_id", negocioId)
+        .or(`data.eq.${dataSelecionada},data_agendamento.eq.${dataSelecionada}`)
+        .neq("status", "cancelado");
+
+    if (error) {
+        console.error("Erro ao verificar horários ocupados:", error);
+        return;
+    }
+
+    // Criar conjunto de horários já reservados
+    const ocupados = new Set();
+    (agendamentos || []).forEach(item => {
+        if (item.horario) ocupados.add(item.horario.substring(0, 5));
+        if (item.hora_inicio) ocupados.add(item.hora_inicio.substring(0, 5));
+    });
+
+    // Desativar botões correspondentes aos horários ocupados
+    slots.forEach(slot => {
+        const hora = slot.getAttribute("data-time")?.substring(0, 5);
+        if (ocupados.has(hora)) {
+            slot.disabled = true;
+            slot.classList.add("disabled");
+            slot.style.opacity = "0.35";
+            slot.style.cursor = "not-allowed";
+            slot.title = "Horário já reservado";
+        }
     });
 }
 
@@ -144,7 +200,7 @@ bookingForm?.addEventListener("submit", async (e) => {
     }
 
     if (!bookingTime.value) {
-        mostrarErroForm("Selecione um horário para o agendamento.");
+        mostrarErroForm("Selecione um horário disponível.");
         return;
     }
 
@@ -158,6 +214,22 @@ bookingForm?.addEventListener("submit", async (e) => {
         const nomeCliente = clientName.value.trim();
         const telefoneCliente = clientPhone.value.trim();
 
+        // Verificação final antes de salvar (evita agendamento duplo simultâneo)
+        const { data: conflito } = await supabaseClient
+            .from("agendamentos")
+            .select("id")
+            .eq("negocio_id", negocioId)
+            .or(`data.eq.${dataFormatada},data_agendamento.eq.${dataFormatada}`)
+            .or(`horario.eq.${horario},hora_inicio.eq.${horario}`)
+            .neq("status", "cancelado")
+            .maybeSingle();
+
+        if (conflito) {
+            mostrarErroForm("Este horário acabou de ser reservado por outro cliente. Escolha outro horário.");
+            await verificarHorariosOcupados();
+            return;
+        }
+
         // 1. Cadastrar/Procurar Cliente
         let clienteId = null;
         const { data: clienteExistente } = await supabaseClient
@@ -170,7 +242,7 @@ bookingForm?.addEventListener("submit", async (e) => {
         if (clienteExistente) {
             clienteId = clienteExistente.id;
         } else {
-            const { data: novoCliente, error: errNovoCliente } = await supabaseClient
+            const { data: novoCliente } = await supabaseClient
                 .from("clientes")
                 .insert([{
                     negocio_id: negocioId,
@@ -180,25 +252,28 @@ bookingForm?.addEventListener("submit", async (e) => {
                 .select("id")
                 .maybeSingle();
 
-            if (errNovoCliente) {
-                console.warn("Aviso ao criar cliente:", errNovoCliente);
-            }
             if (novoCliente) clienteId = novoCliente.id;
         }
 
-        // 2. Registar Agendamento
+        // 2. Gravar Agendamento preenchendo todos os campos de hora e data
+        const payload = {
+            negocio_id: negocioId,
+            servico_id: servicoSelecionadoId,
+            cliente_id: clienteId,
+            nome_cliente: nomeCliente,
+            cliente_nome: nomeCliente,
+            telefone_cliente: telefoneCliente,
+            cliente_telefone: telefoneCliente,
+            data: dataFormatada,
+            data_agendamento: dataFormatada,
+            horario: horario,
+            hora_inicio: horario,
+            status: "confirmado"
+        };
+
         const { error: errAgendamento } = await supabaseClient
             .from("agendamentos")
-            .insert([{
-                negocio_id: negocioId,
-                servico_id: servicoSelecionadoId,
-                cliente_id: clienteId,
-                nome_cliente: nomeCliente,
-                telefone_cliente: telefoneCliente,
-                data: dataFormatada,
-                horario: horario,
-                status: "confirmado"
-            }]);
+            .insert([payload]);
 
         if (errAgendamento) throw errAgendamento;
 
