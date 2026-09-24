@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes | Nexora</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+
+        <!-- MENU LATERAL -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <a href="painel.html" class="brand">
+                    <span class="brand-symbol">N</span>
+                    <span class="brand-name">Nexora</span>
+                </a>
+
+                <nav class="sidebar-nav">
+                    <p class="nav-title">PRINCIPAL</p>
+                    <a href="painel.html" class="nav-item">
+                        <span class="nav-icon">⌂</span>
+                        <span>Painel</span>
+                    </a>
+                    <a href="agenda.html" class="nav-item">
+                        <span class="nav-icon">▣</span>
+                        <span>Agenda</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">▤</span>
+                        <span>Publicações</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">◇</span>
+                        <span>Serviços</span>
+                    </a>
+
+                    <p class="nav-title">NEGÓCIO</p>
+                    <a href="clientes.html" class="nav-item active">
+                        <span class="nav-icon">♙</span>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">R$</span>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a href="meu-negocio.html" class="nav-item">
+                        <span class="nav-icon">□</span>
+                        <span>Meu negócio</span>
+                    </a>
+
+                    <p class="nav-title">CONTA</p>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">⚙</span>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- USUÁRIO DA SIDEBAR -->
+            <div class="sidebar-user">
+                <div class="user-avatar" id="sidebar-avatar">N</div>
+                <div class="user-info">
+                    <strong id="sidebar-name">Carregando...</strong>
+                    <span>Empreendedor</span>
+                </div>
+                <button type="button" class="logout-icon" id="logout-button" title="Sair">↪</button>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="dashboard-main">
+
+            <!-- CABEÇALHO -->
+            <header class="dashboard-header">
+                <button type="button" class="mobile-menu-button" id="mobile-menu-button" aria-label="Abrir menu">☰</button>
+                <div class="header-left">
+                    <span class="header-label">Gestão de Clientes</span>
+                </div>
+                <div class="header-right">
+                    <button type="button" class="notification-button" title="Notificações">♢</button>
+                    <div class="header-avatar" id="header-avatar">N</div>
+                </div>
+            </header>
+
+            <!-- CONTEÚDO -->
+            <section class="dashboard-content">
+
+                <div class="welcome-section">
+                    <div>
+                        <p class="welcome-small">Sua base de contatos e histórico</p>
+                        <h1>Seus <span>Clientes</span></h1>
+                    </div>
+                </div>
+
+                <!-- CARDS DE ESTATÍSTICAS DOS CLIENTES -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Total de Clientes</span>
+                            <span class="stat-icon blue">♙</span>
+                        </div>
+                        <strong class="stat-number" id="total-clientes">0</strong>
+                        <span class="stat-description">Clientes cadastrados na base</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Atendidos Este Mês</span>
+                            <span class="stat-icon purple">★</span>
+                        </div>
+                        <strong class="stat-number" id="clientes-mes">0</strong>
+                        <span class="stat-description">Com agendamentos no mês atual</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Recorrentes</span>
+                            <span class="stat-icon blue">🔄</span>
+                        </div>
+                        <strong class="stat-number" id="clientes-recorrentes">0</strong>
+                        <span class="stat-description">Com 2 ou mais atendimentos</span>
+                    </div>
+                </div>
+
+                <!-- LISTA E BUSCA DE CLIENTES -->
+                <div class="dashboard-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h2>Base de Clientes</h2>
+                            <p>Consulte a lista de clientes, contatos de WhatsApp e histórico de agendamentos.</p>
+                        </div>
+
+                        <!-- CAMPO DE BUSCA -->
+                        <div style="display: flex; gap: 8px; width: 100%; max-width: 320px;">
+                            <input type="text" id="busca-cliente" placeholder="Buscar por nome ou telefone..." style="width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; background: #fff;">
+                        </div>
+                    </div>
+
+                    <!-- LISTA DINÂMICA DE CLIENTES -->
+                    <div id="lista-clientes" class="quick-actions" style="margin-top: 16px;">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 20px 0;">
+                            Carregando clientes...
+                        </p>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/supabase.js"></script>
+    <script src="js/clientes.js"></script>
+</body>
+
+</html>
