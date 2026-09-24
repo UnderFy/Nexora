@@ -6,11 +6,156 @@
     <title>Nexora - Portfólio & Publicações</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Estilização moderna e responsiva do Módulo de Publicações */
+        body {
+            background-color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 16px;
+            color: #0f172a;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+        }
+
+        .page-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            color: #0f172a;
+        }
+
+        .page-header p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .card-section {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            margin-bottom: 20px;
+        }
+
+        .card-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: #0f172a;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #ffffff;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s;
+            color: #0f172a;
+        }
+
+        .form-control:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+        }
+
+        /* Área de Upload Personalizada */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .upload-icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .upload-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .upload-hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .file-name-preview {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .btn-submit {
+            background: #0f172a;
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #1e293b;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
+        <!-- Cabeçalho -->
+        <header class="page-header">
             <h2>Meu Portfólio</h2>
             <p>Poste fotos e vídeos dos seus trabalhos com valor e tempo de realização.</p>
         </header>
@@ -18,51 +163,62 @@
         <!-- Formulário de Nova Publicação -->
         <section class="card-section">
             <h3>Nova Publicação</h3>
-            <form id="form-publicacao" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+            <form id="form-publicacao" style="display: flex; flex-direction: column; gap: 16px;">
                 
+                <!-- Upload de Arquivo -->
                 <div class="form-group">
-                    <label for="post-media">Foto ou Vídeo do Trabalho *</label>
-                    <input type="file" id="post-media" accept="image/*,video/*" required>
+                    <label>Foto ou Vídeo do Trabalho *</label>
+                    <div class="upload-area" onclick="document.getElementById('post-media').click()">
+                        <span class="upload-icon">📸</span>
+                        <span class="upload-text">Clique para selecionar foto ou vídeo</span>
+                        <span class="upload-hint">Suporta imagens (JPG, PNG) e vídeos (MP4)</span>
+                        <div id="file-name" class="file-name-preview"></div>
+                    </div>
+                    <input type="file" id="post-media" accept="image/*,video/*" required style="display: none;">
                 </div>
 
+                <!-- Título -->
                 <div class="form-group">
                     <label for="post-titulo">Título / Nome do Trabalho *</label>
-                    <input type="text" id="post-titulo" placeholder="Ex: Degradê Navalhado + Barba" required>
+                    <input type="text" id="post-titulo" class="form-control" placeholder="Ex: Degradê Navalhado + Barba" required>
                 </div>
 
+                <!-- Serviço do Catálogo -->
                 <div class="form-group">
-                    <label for="post-servico">Vincular a um Serviço do Catálogo (Opcional)</label>
-                    <select id="post-servico">
+                    <label for="post-servico">Vincular a um Serviço (Opcional)</label>
+                    <select id="post-servico" class="form-control">
                         <option value="">Nenhum (Apenas exibição)</option>
                     </select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <!-- Preço e Tempo em Grade -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
-                        <label for="post-preco">Valor do Trabalho (R$) *</label>
-                        <input type="number" id="post-preco" step="0.01" placeholder="35.00" required>
+                        <label for="post-preco">Valor (R$) *</label>
+                        <input type="number" id="post-preco" class="form-control" step="0.01" placeholder="35.00" required>
                     </div>
                     <div class="form-group">
-                        <label for="post-tempo">Tempo Gasto (min) *</label>
-                        <input type="number" id="post-tempo" placeholder="45" required>
+                        <label for="post-tempo">Tempo (min) *</label>
+                        <input type="number" id="post-tempo" class="form-control" placeholder="45" required>
                     </div>
                 </div>
 
+                <!-- Descrição -->
                 <div class="form-group">
                     <label for="post-descricao">Descrição / Detalhes</label>
-                    <textarea id="post-descricao" rows="3" placeholder="Detalhes dos produtos usados, técnicas..."></textarea>
+                    <textarea id="post-descricao" class="form-control" rows="3" placeholder="Detalhes dos produtos usados, técnicas..."></textarea>
                 </div>
 
-                <div id="pub-error-msg" style="color: #ef4444; font-size: 13px; display: none;"></div>
+                <div id="pub-error-msg" style="color: #ef4444; font-size: 13px; display: none; font-weight: 500;"></div>
 
-                <button type="submit" id="btn-submit-post" class="btn-primary">Publicar no Portfólio</button>
+                <button type="submit" id="btn-submit-post" class="btn-submit">Publicar no Portfólio</button>
             </form>
         </section>
 
         <!-- Feed de Publicações Cadastradas -->
-        <section class="card-section" style="margin-top: 20px;">
+        <section class="card-section">
             <h3>Publicações Ativas</h3>
-            <div id="posts-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 15px;">
+            <div id="posts-list" style="display: flex; flex-direction: column; gap: 16px;">
                 <p style="color: #64748b; font-size: 13px;">Carregando publicações...</p>
             </div>
         </section>
@@ -70,5 +226,16 @@
 
     <script src="js/supabase-config.js"></script>
     <script src="js/publicacoes.js"></script>
+    <script>
+        // Atualiza o nome do arquivo selecionado na área de upload
+        document.getElementById('post-media').addEventListener('change', function(e) {
+            const fileNameDiv = document.getElementById('file-name');
+            if (this.files && this.files[0]) {
+                fileNameDiv.textContent = '✓ ' + this.files[0].name;
+            } else {
+                fileNameDiv.textContent = '';
+            }
+        });
+    </script>
 </body>
 </html>
