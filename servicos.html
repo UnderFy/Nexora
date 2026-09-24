@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serviços | Nexora</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+
+        <!-- MENU LATERAL -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <a href="painel.html" class="brand">
+                    <span class="brand-symbol">N</span>
+                    <span class="brand-name">Nexora</span>
+                </a>
+
+                <nav class="sidebar-nav">
+                    <p class="nav-title">PRINCIPAL</p>
+                    <a href="painel.html" class="nav-item">
+                        <span class="nav-icon">⌂</span>
+                        <span>Painel</span>
+                    </a>
+                    <a href="agenda.html" class="nav-item">
+                        <span class="nav-icon">▣</span>
+                        <span>Agenda</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">▤</span>
+                        <span>Publicações</span>
+                    </a>
+                    <a href="servicos.html" class="nav-item active">
+                        <span class="nav-icon">◇</span>
+                        <span>Serviços</span>
+                    </a>
+
+                    <p class="nav-title">NEGÓCIO</p>
+                    <a href="clientes.html" class="nav-item">
+                        <span class="nav-icon">♙</span>
+                        <span>Clientes</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">R$</span>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a href="meu-negocio.html" class="nav-item">
+                        <span class="nav-icon">□</span>
+                        <span>Meu negócio</span>
+                    </a>
+
+                    <p class="nav-title">CONTA</p>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">⚙</span>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- USUÁRIO DA SIDEBAR -->
+            <div class="sidebar-user">
+                <div class="user-avatar" id="sidebar-avatar">N</div>
+                <div class="user-info">
+                    <strong id="sidebar-name">Carregando...</strong>
+                    <span>Empreendedor</span>
+                </div>
+                <button type="button" class="logout-icon" id="logout-button" title="Sair">↪</button>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="dashboard-main">
+
+            <!-- CABEÇALHO -->
+            <header class="dashboard-header">
+                <button type="button" class="mobile-menu-button" id="mobile-menu-button" aria-label="Abrir menu">☰</button>
+                <div class="header-left">
+                    <span class="header-label">Catálogo de Serviços</span>
+                </div>
+                <div class="header-right">
+                    <button type="button" class="notification-button" title="Notificações">♢</button>
+                    <div class="header-avatar" id="header-avatar">N</div>
+                </div>
+            </header>
+
+            <!-- CONTEÚDO -->
+            <section class="dashboard-content">
+
+                <div class="welcome-section">
+                    <div>
+                        <p class="welcome-small">Cadastre e gerencie o que você oferece</p>
+                        <h1>Seus <span>Serviços</span></h1>
+                    </div>
+                </div>
+
+                <!-- CARDS DE ESTATÍSTICAS -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Total de Serviços</span>
+                            <span class="stat-icon blue">◇</span>
+                        </div>
+                        <strong class="stat-number" id="total-servicos">0</strong>
+                        <span class="stat-description">Opções disponíveis no seu catálogo</span>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-title">Preço Médio</span>
+                            <span class="stat-icon purple">R$</span>
+                        </div>
+                        <strong class="stat-number" id="preco-medio">R$ 0,00</strong>
+                        <span class="stat-description">Valor médio cobrado por serviço</span>
+                    </div>
+                </div>
+
+                <!-- PAINEL DE SERVIÇOS -->
+                <div class="dashboard-card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div>
+                            <h2>Serviços Cadastrados</h2>
+                            <p>Estes serviços serão exibidos na sua página pública para agendamento dos clientes.</p>
+                        </div>
+
+                        <button type="button" id="btn-novo-servico" class="primary-button" style="width: auto; padding: 10px 18px; font-size: 13px;">
+                            + Novo Serviço
+                        </button>
+                    </div>
+
+                    <!-- FORMULÁRIO DE SERVIÇO (OCULTO POR PADRÃO) -->
+                    <div id="container-form-servico" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                        <h3 id="titulo-form" style="margin-bottom: 16px; font-size: 16px;">Cadastrar Novo Serviço</h3>
+                        
+                        <form id="form-servico">
+                            <input type="hidden" id="servico-id">
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="nome-servico">Nome do Serviço *</label>
+                                    <input type="text" id="nome-servico" placeholder="Ex: Corte Masculino, Consultoria..." required>
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="preco-servico">Preço (R$) *</label>
+                                    <input type="number" id="preco-servico" step="0.01" min="0" placeholder="0.00" required>
+                                </div>
+
+                                <div class="form-group" style="margin: 0;">
+                                    <label for="duracao-servico">Duração (minutos) *</label>
+                                    <input type="number" id="duracao-servico" min="5" step="5" placeholder="30" value="30" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label for="descricao-servico">Descrição (opcional)</label>
+                                <textarea id="descricao-servico" rows="2" placeholder="Detalhes ou observações sobre o serviço..."></textarea>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button type="button" id="btn-cancelar-servico" class="secondary-button" style="width: auto; padding: 8px 16px; font-size: 13px;">Cancelar</button>
+                                <button type="submit" id="btn-salvar-servico" class="primary-button" style="width: auto; padding: 8px 20px; font-size: 13px;">Salvar Serviço</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- MENSAGEM DE STATUS -->
+                    <div id="mensagem-servico" class="business-message" style="display: none; margin-top: 12px;"></div>
+
+                    <!-- LISTA DINÂMICA DE SERVIÇOS -->
+                    <div id="lista-servicos" class="quick-actions" style="margin-top: 16px;">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 20px 0;">
+                            Carregando serviços...
+                        </p>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/supabase.js"></script>
+    <script src="js/servicos.js"></script>
+</body>
+
+</html>
