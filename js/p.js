@@ -44,24 +44,26 @@ let formaPagamentoSelecionada = "dinheiro";
 async function inicializarPaginaPublica() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
-        negocioId = urlParams.get("id");
+        // Leitura flexível: aceita tanto ?id=UUID quanto ?UUID diretamente
+        negocioId = urlParams.get("id") || window.location.search.replace("?", "").split("&")[0].replace("id=", "").trim();
 
         if (!negocioId) {
             exibirErro();
             return;
         }
 
-        const hoje = new Date().toISOString().split("T")[0];
-        bookingDate.min = hoje;
-        bookingDate.value = hoje;
+        if (bookingDate) {
+            const hoje = new Date().toISOString().split("T")[0];
+            bookingDate.min = hoje;
+            bookingDate.value = hoje;
+        }
 
-        // CÓDIGO ATUALIZADO
-const { data: negocio, error: errNegocio } = await supabaseClient
-    .from("negocios")
-    .select("*")
-    .or(`id.eq.${negocioId},user_id.eq.${negocioId}`)
-    .maybeSingle();
-
+        // Busca o negócio por id OU por user_id
+        const { data: negocio, error: errNegocio } = await supabaseClient
+            .from("negocios")
+            .select("*")
+            .or(`id.eq.${negocioId},user_id.eq.${negocioId}`)
+            .maybeSingle();
 
         if (errNegocio || !negocio) {
             console.error("Erro ao procurar negócio:", errNegocio);
@@ -69,17 +71,20 @@ const { data: negocio, error: errNegocio } = await supabaseClient
             return;
         }
 
+        // CORREÇÃO ESSENCIAL: Garante que negocioId passe a ser o ID real do negócio
+        negocioId = negocio.id;
         negocioDados = negocio;
+
         const nome = negocio.nome || "Meu Negócio";
-        bizName.textContent = nome;
-        bizAvatar.textContent = nome.trim().charAt(0).toUpperCase();
+        if (bizName) bizName.textContent = nome;
+        if (bizAvatar) bizAvatar.textContent = nome.trim().charAt(0).toUpperCase();
         
         const cidade = negocio.cidade || "";
         const endereco = negocio.endereco || "";
-        bizLocation.textContent = `📍 ${[endereco, cidade].filter(Boolean).join(" - ") || "Localização não informada"}`;
-        bizDescription.textContent = negocio.descricao || "";
+        if (bizLocation) bizLocation.textContent = `📍 ${[endereco, cidade].filter(Boolean).join(" - ") || "Localização não informada"}`;
+        if (bizDescription) bizDescription.textContent = negocio.descricao || "";
 
-        // 1. Carregar Serviços disponíveis
+        // 1. Carregar Serviços disponíveis do negócio
         const { data: servicos, error: errServicos } = await supabaseClient
             .from("servicos")
             .select("*")
@@ -87,13 +92,13 @@ const { data: negocio, error: errNegocio } = await supabaseClient
             .order("nome", { ascending: true });
 
         if (errServicos || !servicos || servicos.length === 0) {
-            servicesList.innerHTML = `<p style="color: #64748b; font-size: 13px;">Nenhum serviço disponível para agendamento no momento.</p>`;
+            if (servicesList) servicesList.innerHTML = `<p style="color: #64748b; font-size: 13px;">Nenhum serviço disponível para agendamento no momento.</p>`;
         } else {
             servicosDisponiveis = servicos;
             renderizarServicos(servicos);
         }
 
-        // 2. Buscar conexão Mercado Pago do Negócio
+        // 2. Buscar conexão Mercado Pago ativa do Negócio
         const { data: conexaoMP } = await supabaseClient
             .from("mercadopago_conexoes")
             .select("*")
@@ -112,8 +117,8 @@ const { data: negocio, error: errNegocio } = await supabaseClient
         // 5. Atualizar horários ocupados para a data inicial
         await verificarHorariosOcupados();
 
-        loadingState.style.display = "none";
-        publicContent.style.display = "block";
+        if (loadingState) loadingState.style.display = "none";
+        if (publicContent) publicContent.style.display = "block";
 
     } catch (err) {
         console.error("Erro ao carregar perfil público:", err);
@@ -122,6 +127,8 @@ const { data: negocio, error: errNegocio } = await supabaseClient
 }
 
 function renderizarServicos(servicos) {
+    if (!servicesList) return;
+
     servicesList.innerHTML = servicos.map((servico, index) => {
         const preco = parseFloat(servico.preco || 0).toFixed(2).replace(".", ",");
         const duracao = servico.duracao_minutos || servico.duracao || 30;
@@ -153,7 +160,6 @@ function selecionarServico(id) {
         radio.closest(".service-selection-card").classList.add("selected");
     }
 
-    // Se o Brick de cartão já estiver carregado, atualiza o valor
     if (formaPagamentoSelecionada === "credito" || formaPagamentoSelecionada === "debito") {
         renderizarMercadoPagoBrick();
     }
@@ -272,7 +278,6 @@ async function renderizarMercadoPagoBrick() {
                 onReady: () => {},
                 onSubmit: (cardFormData) => {
                     return new Promise((resolve, reject) => {
-                        // Enviar dados para cobrança com split de R$ 5,00 para Nexora
                         processarPagamentoMercadoPago(cardFormData)
                             .then(() => resolve())
                             .catch((err) => reject(err));
@@ -288,10 +293,8 @@ async function renderizarMercadoPagoBrick() {
     }
 }
 
-// Simular chamada backend de Split Payment (Retenção de R$ 5,00 para Nexora)
 async function processarPagamentoMercadoPago(cardFormData) {
     console.log("Dados do Cartão Tokenizados pelo MP:", cardFormData);
-    // Aqui é onde o split ("application_fee": 5.00) é repassado na chamada de pagamento
     return true;
 }
 
@@ -311,7 +314,7 @@ function configurarHorarios() {
             if (slot.disabled) return;
             slots.forEach(s => s.classList.remove("active"));
             slot.classList.add("active");
-            bookingTime.value = slot.getAttribute("data-time");
+            if (bookingTime) bookingTime.value = slot.getAttribute("data-time");
         });
     });
 
@@ -319,6 +322,7 @@ function configurarHorarios() {
 }
 
 async function verificarHorariosOcupados() {
+    if (!bookingDate) return;
     const dataSelecionada = bookingDate.value;
     if (!dataSelecionada || !negocioId) return;
 
@@ -331,7 +335,7 @@ async function verificarHorariosOcupados() {
         slot.style.cursor = "pointer";
         slot.title = "";
     });
-    bookingTime.value = "";
+    if (bookingTime) bookingTime.value = "";
 
     const { data: agendamentos, error } = await supabaseClient
         .from("agendamentos")
@@ -364,28 +368,30 @@ async function verificarHorariosOcupados() {
 }
 
 function exibirErro() {
-    loadingState.style.display = "none";
-    publicContent.style.display = "none";
-    errorState.style.display = "block";
+    if (loadingState) loadingState.style.display = "none";
+    if (publicContent) publicContent.style.display = "none";
+    if (errorState) errorState.style.display = "block";
 }
 
 bookingForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    errorMsg.style.display = "none";
+    if (errorMsg) errorMsg.style.display = "none";
 
     if (!servicoSelecionadoId) {
         mostrarErroForm("Selecione um serviço.");
         return;
     }
 
-    if (!bookingTime.value) {
+    if (!bookingTime || !bookingTime.value) {
         mostrarErroForm("Selecione um horário disponível.");
         return;
     }
 
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "Agendando...";
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Agendando...";
+    }
 
     try {
         const servicoObj = servicosDisponiveis.find(s => s.id === servicoSelecionadoId);
@@ -491,10 +497,15 @@ bookingForm?.addEventListener("submit", async (e) => {
         if (errAgendamento) throw errAgendamento;
 
         // 4. Ecrã de Sucesso
-        document.getElementById("summary-service").textContent = servicoObj ? servicoObj.nome : "Serviço";
-        document.getElementById("summary-date").textContent = dataFormatada.split("-").reverse().join("/");
-        document.getElementById("summary-time").textContent = horario;
-        document.getElementById("summary-client").textContent = nomeCliente;
+        const srvEl = document.getElementById("summary-service");
+        const dateEl = document.getElementById("summary-date");
+        const timeEl = document.getElementById("summary-time");
+        const clientEl = document.getElementById("summary-client");
+
+        if (srvEl) srvEl.textContent = servicoObj ? servicoObj.nome : "Serviço";
+        if (dateEl) dateEl.textContent = dataFormatada.split("-").reverse().join("/");
+        if (timeEl) timeEl.textContent = horario;
+        if (clientEl) clientEl.textContent = nomeCliente;
 
         const rotulosPagamento = {
             dinheiro: "Dinheiro Presencial",
@@ -507,22 +518,26 @@ bookingForm?.addEventListener("submit", async (e) => {
             summaryPaymentEl.textContent = rotulosPagamento[formaPagamentoSelecionada] || formaPagamentoSelecionada;
         }
 
-        bookingSection.style.display = "none";
-        successSection.style.display = "block";
+        if (bookingSection) bookingSection.style.display = "none";
+        if (successSection) successSection.style.display = "block";
 
     } catch (err) {
         console.error("Erro no agendamento:", err);
         const mensagemErro = err?.message || err?.details || "Erro desconhecido ao agendar.";
         mostrarErroForm(`Erro ao agendar: ${mensagemErro}`);
     } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Confirmar Agendamento";
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Confirmar Agendamento";
+        }
     }
 });
 
 function mostrarErroForm(texto) {
-    errorMsg.textContent = texto;
-    errorMsg.style.display = "block";
+    if (errorMsg) {
+        errorMsg.textContent = texto;
+        errorMsg.style.display = "block";
+    }
 }
 
 // Inicializar aplicação
