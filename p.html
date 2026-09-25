@@ -1,323 +1,143 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento | Nexora</title>
-    <link rel="stylesheet" href="style.css">
-
+    <title>Agendamento Online - Nexora</title>
+    <link rel="stylesheet" href="css/style.css">
+    
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
 
-    <style>
-        body.public-body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .public-container {
-            width: 100%;
-            max-width: 520px;
-            margin: 0 auto;
-        }
-
-        .public-card {
-            background: #ffffff;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-
-        .business-header-banner {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            height: 100px;
-            position: relative;
-        }
-
-        .business-profile-info {
-            padding: 0 20px 20px 20px;
-            position: relative;
-            margin-top: -40px;
-        }
-
-        .business-avatar-large {
-            width: 72px;
-            height: 72px;
-            border-radius: 16px;
-            background: #ffffff;
-            color: #4f46e5;
-            font-size: 28px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border: 3px solid #ffffff;
-            margin-bottom: 12px;
-        }
-
-        .service-selection-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .service-selection-card:hover, .service-selection-card.selected {
-            border-color: #4f46e5;
-            background-color: #f5f3ff;
-        }
-
-        .service-selection-card input[type="radio"] {
-            accent-color: #4f46e5;
-            width: 18px;
-            height: 18px;
-        }
-
-        .payment-option-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .payment-option-card:hover, .payment-option-card.selected {
-            border-color: #4f46e5;
-            background-color: #f5f3ff;
-        }
-
-        .payment-option-card input[type="radio"] {
-            accent-color: #4f46e5;
-            width: 18px;
-            height: 18px;
-        }
-
-        .step-title {
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            margin: 20px 0 10px 0;
-        }
-
-        .time-slots-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .time-slot-btn {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .time-slot-btn:hover, .time-slot-btn.active {
-            background: #4f46e5;
-            color: #ffffff;
-            border-color: #4f46e5;
-        }
-
-        .success-box {
-            text-align: center;
-            padding: 32px 20px;
-        }
-
-        .success-icon {
-            width: 64px;
-            height: 64px;
-            background: #dcfce7;
-            color: #16a34a;
-            font-size: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px auto;
-        }
-    </style>
+    <!-- Mercado Pago SDK v2 -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
+<body style="background-color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; padding: 16px;">
 
-<body class="public-body">
+    <!-- ESTADO DE CARREGAMENTO -->
+    <div id="loading-state" style="text-align: center; padding: 40px 16px;">
+        <p style="color: #64748b; font-weight: 500;">Carregando informações do agendamento...</p>
+    </div>
 
-    <div class="public-container">
+    <!-- ESTADO DE ERRO -->
+    <div id="error-state" style="display: none; text-align: center; padding: 40px 16px;">
+        <h2 style="color: #ef4444; font-size: 20px;">Negócio não encontrado</h2>
+        <p style="color: #64748b; font-size: 14px;">O link acessado é inválido ou o perfil do estabelecimento não está disponível.</p>
+    </div>
 
-        <!-- ESTADO DE CARREGAMENTO -->
-        <div id="loading-state" class="public-card" style="padding: 40px; text-align: center;">
-            <p style="color: #64748b;">Carregando informações do negócio...</p>
-        </div>
+    <!-- CONTEÚDO PÚBLICO -->
+    <div id="public-content" style="display: none; max-width: 500px; margin: 0 auto;">
 
-        <!-- MENSAGEM DE ERRO (CASO NEGÓCIO NÃO EXISTA) -->
-        <div id="error-state" class="public-card" style="display: none; padding: 40px; text-align: center;">
-            <h2 style="color: #ef4444; margin-bottom: 8px;">Negócio não encontrado</h2>
-            <p style="color: #64748b;">Verifique o link digitado e tente novamente.</p>
-        </div>
-
-        <!-- CONTEÚDO PRINCIPAL -->
-        <div id="public-content" class="public-card" style="display: none;">
-
-            <!-- CABEÇALHO DO NEGÓCIO -->
-            <div class="business-header-banner"></div>
-            <div class="business-profile-info">
-                <div class="business-avatar-large" id="biz-avatar">N</div>
-                <h1 id="biz-name" style="font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Nome do Negócio</h1>
-                <p id="biz-location" style="font-size: 13px; color: #64748b; margin-bottom: 8px;">📍 Cidade / Endereço</p>
-                <p id="biz-description" style="font-size: 14px; color: #334155; line-height: 1.4;"></p>
+        <!-- SEÇÃO DE FORMULÁRIO DE AGENDAMENTO -->
+        <div id="booking-section" style="background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+            
+            <!-- PERFIL DO NEGÓCIO -->
+            <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px;">
+                <div id="biz-avatar" style="width: 52px; height: 52px; border-radius: 50%; background: #10b981; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px;">N</div>
+                <div>
+                    <h1 id="biz-name" style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;">Nome do Negócio</h1>
+                    <span id="biz-location" style="font-size: 13px; color: #64748b; display: block; margin-top: 2px;">📍 Localização</span>
+                    <p id="biz-description" style="font-size: 12px; color: #94a3b8; margin: 4px 0 0 0;"></p>
+                </div>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;">
-
-            <!-- FORMULÁRIO DE AGENDAMENTO -->
-            <div style="padding: 20px;" id="booking-section">
-
-                <form id="form-agendamento-publico">
-
-                    <!-- PASSO 1: SERVIÇO -->
-                    <p class="step-title">1. Selecione o Serviço</p>
-                    <div id="services-list">
-                        <p style="color: #94a3b8; font-size: 13px;">Carregando serviços disponíveis...</p>
+            <form id="form-agendamento-publico">
+                
+                <!-- 1. SELEÇÃO DE SERVIÇO -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">1. Selecione o Serviço</label>
+                    <div id="services-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Inserido dinamicamente pelo JS -->
                     </div>
-
-                    <!-- PASSO 2: DATA E HORÁRIO -->
-                    <p class="step-title">2. Escolha Data e Horário</p>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
-                        <div class="form-group" style="margin: 0;">
-                            <label for="booking-date" style="font-size: 12px; font-weight: 600; color: #475569;">Data do Agendamento *</label>
-                            <input type="date" id="booking-date" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                        </div>
-
-                        <div>
-                            <label style="font-size: 12px; font-weight: 600; color: #475569;">Horários Disponíveis *</label>
-                            <div class="time-slots-grid" id="time-slots">
-                                <div class="time-slot-btn" data-time="08:00">08:00</div>
-                                <div class="time-slot-btn" data-time="09:00">09:00</div>
-                                <div class="time-slot-btn" data-time="10:00">10:00</div>
-                                <div class="time-slot-btn" data-time="11:00">11:00</div>
-                                <div class="time-slot-btn" data-time="13:00">13:00</div>
-                                <div class="time-slot-btn" data-time="14:00">14:00</div>
-                                <div class="time-slot-btn" data-time="15:00">15:00</div>
-                                <div class="time-slot-btn" data-time="16:00">16:00</div>
-                                <div class="time-slot-btn" data-time="17:00">17:00</div>
-                                <div class="time-slot-btn" data-time="18:00">18:00</div>
-                            </div>
-                            <input type="hidden" id="booking-time" required>
-                        </div>
-                    </div>
-
-                    <!-- PASSO 3: SEUS DADOS -->
-                    <p class="step-title">3. Seus Dados</p>
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label for="client-name" style="font-size: 12px; font-weight: 600; color: #475569;">Seu Nome Completo *</label>
-                        <input type="text" id="client-name" placeholder="Ex: Maria Silva" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 12px;">
-                        <label for="client-phone" style="font-size: 12px; font-weight: 600; color: #475569;">Seu WhatsApp / Telefone *</label>
-                        <input type="tel" id="client-phone" placeholder="Ex: (27) 99999-9999" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
-                    </div>
-
-                    <!-- PASSO 4: FORMA DE PAGAMENTO -->
-                    <p class="step-title">4. Forma de Pagamento</p>
-                    <div id="opcoes-pagamento-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
-                        <p style="color: #94a3b8; font-size: 13px;">Carregando formas de pagamento...</p>
-                    </div>
-
-                    <!-- DETALHES DO PIX -->
-                    <div id="painel-pix-detalhes" style="display: none; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Pagamento via Pix Antecipado</h4>
-                        <p style="font-size: 13px; color: #64748b; margin-bottom: 12px; line-height: 1.4;">
-                            Faça a transferência para a chave abaixo para garantir a sua reserva:
-                        </p>
-
-                        <div style="background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
-                            <span style="font-size: 12px; color: #64748b; display: block;">Titular: <strong id="pix-titular-display" style="color: #0f172a;">-</strong></span>
-                            <span style="font-size: 12px; color: #64748b; display: block; margin-top: 4px;">Chave (<span id="pix-tipo-display">PIX</span>):</span>
-                            <strong id="pix-chave-display" style="font-size: 14px; color: #4f46e5; word-break: break-all;">-</strong>
-                        </div>
-
-                        <button type="button" id="btn-copiar-pix" class="secondary-button" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-bottom: 12px;">
-                            📋 Copiar Chave Pix
-                        </button>
-
-                        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Anexar Comprovante (Opcional):</label>
-                        <input type="file" id="input-comprovante-pix" accept="image/*,application/pdf" style="width: 100%; font-size: 12px; color: #475569;">
-                    </div>
-
-                    <!-- DETALHES DO CARTÃO -->
-                    <div id="painel-cartao-detalhes" style="display: none; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Dados do Cartão</h4>
-                        <input type="text" id="card-number" placeholder="Número do Cartão" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; margin-bottom: 8px;">
-                        <div style="display: flex; gap: 8px;">
-                            <input type="text" id="card-expiry" placeholder="MM/AA" style="width: 50%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
-                            <input type="text" id="card-cvc" placeholder="CVC" style="width: 50%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
-                        </div>
-                    </div>
-
-                    <div id="booking-error-msg" style="display: none; color: #ef4444; font-size: 13px; margin-bottom: 12px; text-align: center;"></div>
-
-                    <button type="submit" id="btn-submit-booking" class="primary-button" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border-radius: 10px;">
-                        Confirmar Agendamento
-                    </button>
-                </form>
-
-            </div>
-
-            <!-- TELA DE SUCESSO DO AGENDAMENTO -->
-            <div id="success-section" class="success-box" style="display: none;">
-                <div class="success-icon">✓</div>
-                <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Agendamento Confirmado!</h2>
-                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
-                    Seu horário foi reservado com sucesso no estabelecimento.
-                </p>
-
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: left; margin-bottom: 24px; font-size: 14px;">
-                    <p style="margin-bottom: 6px;"><strong>Serviço:</strong> <span id="summary-service">-</span></p>
-                    <p style="margin-bottom: 6px;"><strong>Data:</strong> <span id="summary-date">-</span></p>
-                    <p style="margin-bottom: 6px;"><strong>Horário:</strong> <span id="summary-time">-</span></p>
-                    <p style="margin-bottom: 6px;"><strong>Cliente:</strong> <span id="summary-client">-</span></p>
-                    <p style="margin-bottom: 0;"><strong>Pagamento:</strong> <span id="summary-payment">-</span></p>
                 </div>
 
-                <button type="button" onclick="window.location.reload()" class="secondary-button" style="width: 100%; padding: 12px;">
-                    Fazer Novo Agendamento
-                </button>
-            </div>
+                <!-- 2. DATA E HORÁRIO -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">2. Escolha a Data e Horário</label>
+                    
+                    <input type="date" id="booking-date" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 12px; box-sizing: border-box;">
 
+                    <div id="time-slots-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
+                        <button type="button" class="time-slot-btn" data-time="08:00">08:00</button>
+                        <button type="button" class="time-slot-btn" data-time="09:00">09:00</button>
+                        <button type="button" class="time-slot-btn" data-time="10:00">10:00</button>
+                        <button type="button" class="time-slot-btn" data-time="11:00">11:00</button>
+                        <button type="button" class="time-slot-btn" data-time="13:00">13:00</button>
+                        <button type="button" class="time-slot-btn" data-time="14:00">14:00</button>
+                        <button type="button" class="time-slot-btn" data-time="15:00">15:00</button>
+                        <button type="button" class="time-slot-btn" data-time="16:00">16:00</button>
+                        <button type="button" class="time-slot-btn" data-time="17:00">17:00</button>
+                        <button type="button" class="time-slot-btn" data-time="18:00">18:00</button>
+                    </div>
+                    <input type="hidden" id="booking-time">
+                </div>
+
+                <!-- 3. SEUS DADOS -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">3. Seus Dados</label>
+                    <input type="text" id="client-name" placeholder="Seu Nome Completo" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; margin-bottom: 8px; box-sizing: border-box;">
+                    <input type="tel" id="client-phone" placeholder="Seu Telefone / WhatsApp" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+
+                <!-- 4. FORMA DE PAGAMENTO -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">4. Forma de Pagamento</label>
+                    
+                    <div id="opcoes-pagamento-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                        <!-- Inserido dinamicamente via JS -->
+                    </div>
+
+                    <!-- PAINEL PIX -->
+                    <div id="painel-pix-detalhes" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px;">
+                        <p style="font-size: 12px; color: #166534; margin: 0 0 6px 0; font-weight: 600;">Faça a transferência Pix para a chave abaixo:</p>
+                        <p style="font-size: 13px; color: #0f172a; margin: 0 0 4px 0;"><strong>Titular:</strong> <span id="pix-titular-display">-</span></p>
+                        <p style="font-size: 13px; color: #0f172a; margin: 0 0 10px 0;"><strong>Chave (<span id="pix-tipo-display">PIX</span>):</strong> <span id="pix-chave-display">-</span></p>
+                        
+                        <button type="button" id="btn-copiar-pix" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; margin-bottom: 12px;">📋 Copiar Chave Pix</button>
+
+                        <label style="display: block; font-size: 12px; color: #166534; font-weight: 600; margin-bottom: 4px;">Anexar Comprovativo (Opcional):</label>
+                        <input type="file" id="input-comprovante-pix" accept="image/*,application/pdf" style="font-size: 12px;">
+                    </div>
+
+                    <!-- PAINEL CARTÃO MERCADO PAGO BRICK -->
+                    <div id="painel-cartao-detalhes" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px;">
+                        <p style="font-size: 12px; color: #64748b; margin: 0 0 10px 0;">Pagamento seguro via Mercado Pago com retenção de taxa da plataforma:</p>
+                        <div id="cardPaymentBrick_container"></div>
+                    </div>
+                </div>
+
+                <!-- MENSAGEM DE ERRO -->
+                <p id="booking-error-msg" style="display: none; color: #ef4444; font-size: 13px; font-weight: 600; margin-bottom: 12px;"></p>
+
+                <!-- BOTÃO DE SUBMIT -->
+                <button type="submit" id="btn-submit-booking" style="width: 100%; background: #10b981; color: white; border: none; font-weight: 700; font-size: 15px; padding: 14px; border-radius: 10px; cursor: pointer;">
+                    Confirmar Agendamento
+                </button>
+            </form>
         </div>
 
-        <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 16px;">
-            Desenvolvido por <strong>Nexora</strong>
-        </p>
+        <!-- ECRÃ DE SUCESSO -->
+        <div id="success-section" style="display: none; background: #ffffff; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+            <div style="width: 60px; height: 60px; background: #d1fae5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 16px auto;">✓</div>
+            <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">Agendamento Confirmado!</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 0 0 20px 0;">Obrigado! Seu horário foi reservado com sucesso.</p>
+
+            <div style="background: #f8fafc; border-radius: 10px; padding: 16px; text-align: left; font-size: 13px; color: #334155; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                <p style="margin: 0;"><strong>Serviço:</strong> <span id="summary-service">-</span></p>
+                <p style="margin: 0;"><strong>Data:</strong> <span id="summary-date">-</span></p>
+                <p style="margin: 0;"><strong>Horário:</strong> <span id="summary-time">-</span></p>
+                <p style="margin: 0;"><strong>Cliente:</strong> <span id="summary-client">-</span></p>
+                <p style="margin: 0;"><strong>Forma de Pagamento:</strong> <span id="summary-payment">-</span></p>
+            </div>
+
+            <button type="button" onclick="window.location.reload()" style="background: #0f172a; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                Novo Agendamento
+            </button>
+        </div>
 
     </div>
 
-    <!-- SCRIPTS -->
-    <script src="js/supabase.js"></script>
-    <script src="js/p.js?v=4"></script>
+    <script src="js/p.js"></script>
 </body>
-
 </html>
