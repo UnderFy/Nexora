@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamentos | Nexora</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+
+        <!-- MENU LATERAL -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <a href="painel.html" class="brand">
+                    <span class="brand-symbol">N</span>
+                    <span class="brand-name">Nexora</span>
+                </a>
+
+                <nav class="sidebar-nav">
+                    <p class="nav-title">PRINCIPAL</p>
+
+                    <a href="painel.html" class="nav-item">
+                        <span class="nav-icon">⌂</span>
+                        <span>Painel</span>
+                    </a>
+
+                    <a href="agenda.html" class="nav-item">
+                        <span class="nav-icon">▣</span>
+                        <span>Agenda</span>
+                    </a>
+
+                    <a href="publicacoes.html" class="nav-item">
+                        <span class="nav-icon">▤</span>
+                        <span>Publicações</span>
+                    </a>
+
+                    <a href="servicos.html" class="nav-item">
+                        <span class="nav-icon">◇</span>
+                        <span>Serviços</span>
+                    </a>
+
+                    <p class="nav-title">NEGÓCIO</p>
+
+                    <a href="clientes.html" class="nav-item">
+                        <span class="nav-icon">♙</span>
+                        <span>Clientes</span>
+                    </a>
+
+                    <a href="pagamentos.html" class="nav-item active">
+                        <span class="nav-icon">R$</span>
+                        <span>Pagamentos</span>
+                    </a>
+
+                    <a href="meu-negocio.html" class="nav-item">
+                        <span class="nav-icon">□</span>
+                        <span>Meu negócio</span>
+                    </a>
+
+                    <p class="nav-title">CONTA</p>
+
+                    <a href="configuracoes.html" class="nav-item">
+                        <span class="nav-icon">⚙</span>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- USUÁRIO DO MENU -->
+            <div class="sidebar-user">
+                <div class="user-avatar" id="sidebar-avatar">N</div>
+                <div class="user-info">
+                    <strong id="sidebar-name">Carregando...</strong>
+                    <span>Empreendedor</span>
+                </div>
+                <button type="button" class="logout-icon" id="logout-button" title="Sair">
+                    ↪
+                </button>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="dashboard-main">
+
+            <!-- CABEÇALHO -->
+            <header class="dashboard-header">
+                <button type="button" class="mobile-menu-button" id="mobile-menu-button" aria-label="Abrir menu">
+                    ☰
+                </button>
+
+                <div class="header-left">
+                    <span class="header-label">Configuração de Pagamentos</span>
+                </div>
+
+                <div class="header-right">
+                    <button type="button" class="notification-button" title="Notificações">
+                        ♢
+                    </button>
+                    <div class="header-avatar" id="header-avatar">N</div>
+                </div>
+            </header>
+
+            <!-- CONTEÚDO -->
+            <section class="dashboard-content">
+
+                <!-- CABEÇALHO DA PÁGINA -->
+                <div class="welcome-section">
+                    <div>
+                        <p class="welcome-small">Gestão Financeira</p>
+                        <h1>Formas de Pagamento</h1>
+                        <p class="welcome-description">
+                            Defina como os seus clientes podem pagar pelos serviços agendados.
+                        </p>
+                    </div>
+
+                    <button type="button" class="primary-button" id="btn-salvar-pagamentos">
+                        Salvar Alterações
+                    </button>
+                </div>
+
+                <!-- FORMULÁRIO DE CONFIGURAÇÃO DE PAGAMENTOS -->
+                <form id="form-pagamentos" class="dashboard-columns">
+
+                    <!-- FORMAS DE PAGAMENTO ACEITAS -->
+                    <div class="dashboard-card" style="grid-column: span 2;">
+                        <div class="card-header">
+                            <div>
+                                <h2>Métodos Aceitos</h2>
+                                <p>Selecione as opções ativas para o seu negócio.</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+
+                            <!-- DINHEIRO PRESENCIAL -->
+                            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border-color, #E5E7EB); border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">💵</span>
+                                    <div>
+                                        <strong>Dinheiro Presencial</strong>
+                                        <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">Pago no momento do atendimento presencial.</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="aceita-dinheiro" style="width: 20px; height: 20px;" checked>
+                            </label>
+
+                            <!-- PIX ANTECIPADO -->
+                            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border-color, #E5E7EB); border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">⚡</span>
+                                    <div>
+                                        <strong>Pix (Pago Antecipadamente)</strong>
+                                        <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">Exige pagamento via Pix para confirmar a reserva.</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="aceita-pix" style="width: 20px; height: 20px;" checked>
+                            </label>
+
+                            <!-- CARTÃO DE CRÉDITO ANTECIPADO -->
+                            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border-color, #E5E7EB); border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">💳</span>
+                                    <div>
+                                        <strong>Cartão de Crédito (Pago Antecipadamente)</strong>
+                                        <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">Pagamento online antes da realização do serviço.</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="aceita-credito" style="width: 20px; height: 20px;" checked>
+                            </label>
+
+                            <!-- CARTÃO DE DÉBITO ANTECIPADO -->
+                            <label style="display: flex; align-items: center; justify-content: space-between; padding: 1rem; border: 1px solid var(--border-color, #E5E7EB); border-radius: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span style="font-size: 1.25rem;">💳</span>
+                                    <div>
+                                        <strong>Cartão de Débito (Pago Antecipadamente)</strong>
+                                        <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">Pagamento online antes da realização do serviço.</p>
+                                    </div>
+                                </div>
+                                <input type="checkbox" id="aceita-debito" style="width: 20px; height: 20px;" checked>
+                            </label>
+
+                        </div>
+                    </div>
+
+                    <!-- DADOS DO PIX (Aparece se o Pix estiver ativo) -->
+                    <div class="dashboard-card" id="card-dados-pix" style="grid-column: span 2;">
+                        <div class="card-header">
+                            <div>
+                                <h2>Dados para Recebimento Pix</h2>
+                                <p>Informe a sua chave para que o cliente realize a transferência antecipada.</p>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div>
+                                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Tipo de Chave Pix</label>
+                                <select id="tipo-chave-pix" style="width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px;">
+                                    <option value="cpf">CPF/CNPJ</option>
+                                    <option value="email">E-mail</option>
+                                    <option value="telefone">Telefone</option>
+                                    <option value="aleatoria">Chave Aleatória</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Chave Pix</label>
+                                <input type="text" id="chave-pix" placeholder="Digite a sua chave Pix" style="width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px;">
+                            </div>
+
+                            <div>
+                                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Nome do Titular da Conta</label>
+                                <input type="text" id="titular-pix" placeholder="Ex: João Silva Santos" style="width: 100%; padding: 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px;">
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/supabase.js"></script>
+    <script src="js/pagamentos.js"></script>
+</body>
+
+</html>
