@@ -1,5 +1,5 @@
 /* ============================================================
-   NEXORA - LÓGICA DE AGENDAMENTO PÚBLICO & PAGAMENTO (js/p.js)
+   NEXORA - LÓGICA DE AGENDAMENTO PÚBLICO & MERCADO PAGO SPLIT (js/p.js)
 ============================================================ */
 
 // Elementos de ecrã
@@ -34,8 +34,11 @@ let negocioDados = null;
 let servicosDisponiveis = [];
 let servicoSelecionadoId = null;
 
-// Estado de Pagamento
+// Estado de Pagamento & Mercado Pago
 let configPagamentoNegocio = null;
+let conexaoMercadoPago = null;
+let mpInstance = null;
+let cardPaymentBrickController = null;
 let formaPagamentoSelecionada = "dinheiro";
 
 async function inicializarPaginaPublica() {
@@ -88,13 +91,23 @@ async function inicializarPaginaPublica() {
             renderizarServicos(servicos);
         }
 
-        // 2. Carregar Formas de Pagamento ativas do negócio
+        // 2. Buscar conexão Mercado Pago do Negócio
+        const { data: conexaoMP } = await supabaseClient
+            .from("mercadopago_conexoes")
+            .select("*")
+            .eq("negocio_id", negocioId)
+            .eq("status", "ativo")
+            .maybeSingle();
+
+        conexaoMercadoPago = conexaoMP;
+
+        // 3. Carregar Formas de Pagamento ativas do negócio
         await carregarFormasPagamento(negocioId);
 
-        // 3. Configurar seletor de horários
+        // 4. Configurar seletor de horários
         configurarHorarios();
         
-        // 4. Atualizar horários ocupados para a data inicial
+        // 5. Atualizar horários ocupados para a data inicial
         await verificarHorariosOcupados();
 
         loadingState.style.display = "none";
@@ -137,16 +150,21 @@ function selecionarServico(id) {
     if (radio) {
         radio.closest(".service-selection-card").classList.add("selected");
     }
+
+    // Se o Brick de cartão já estiver carregado, atualiza o valor
+    if (formaPagamentoSelecionada === "credito" || formaPagamentoSelecionada === "debito") {
+        renderizarMercadoPagoBrick();
+    }
 }
 
 /* -------------------------------------------------------------
- * MÓDULO DE PAGAMENTO
+ * MÓDULO DE PAGAMENTO & MERCADO PAGO BRICK
  * ----------------------------------------------------------- */
 async function carregarFormasPagamento(negocioIdParam) {
     if (!containerPagamentos) return;
 
     try {
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
             .from("configuracao_pagamentos")
             .select("*")
             .eq("negocio_id", negocioIdParam)
@@ -154,7 +172,6 @@ async function carregarFormasPagamento(negocioIdParam) {
 
         configPagamentoNegocio = data || { aceita_dinheiro: true };
     } catch (e) {
-        console.warn("Aviso ao buscar configurações de pagamento, aplicando padrão:", e);
         configPagamentoNegocio = { aceita_dinheiro: true };
     }
 
@@ -163,8 +180,8 @@ async function carregarFormasPagamento(negocioIdParam) {
     const opcoes = [
         { id: "dinheiro", label: "💵 Dinheiro no Local", ativo: configPagamentoNegocio.aceita_dinheiro ?? true },
         { id: "pix", label: "⚡ Pix (Pago Antecipadamente)", ativo: configPagamentoNegocio.aceita_pix ?? false },
-        { id: "credito", label: "💳 Cartão de Crédito (Antecipado)", ativo: configPagamentoNegocio.aceita_credito ?? false },
-        { id: "debito", label: "💳 Cartão de Débito (Antecipado)", ativo: configPagamentoNegocio.aceita_debito ?? false }
+        { id: "credito", label: "💳 Cartão de Crédito (Online)", ativo: (configPagamentoNegocio.aceita_credito ?? false) && !!conexaoMercadoPago },
+        { id: "debito", label: "💳 Cartão de Débito (Online)", ativo: (configPagamentoNegocio.aceita_debito ?? false) && !!conexaoMercadoPago }
     ];
 
     const opcoesAtivas = opcoes.filter(o => o.ativo);
@@ -209,6 +226,71 @@ function alterarFormaPagamento(tipo) {
         if (tipoEl) tipoEl.textContent = (configPagamentoNegocio.tipo_chave_pix || "Chave").toUpperCase();
         if (chaveEl) chaveEl.textContent = configPagamentoNegocio.chave_pix || "Não cadastrada";
     }
+
+    if ((tipo === "credito" || tipo === "debito") && conexaoMercadoPago) {
+        renderizarMercadoPagoBrick();
+    }
+}
+
+// Renderizar Mercado Pago Card Payment Brick
+async function renderizarMercadoPagoBrick() {
+    if (!conexaoMercadoPago || !conexaoMercadoPago.public_key || typeof MercadoPago === "undefined") return;
+
+    const servicoObj = servicosDisponiveis.find(s => s.id === servicoSelecionadoId);
+    const precoTotal = servicoObj ? parseFloat(servicoObj.preco || 0) : 0;
+
+    if (precoTotal <= 0) return;
+
+    try {
+        if (!mpInstance) {
+            mpInstance = new MercadoPago(conexaoMercadoPago.public_key, { locale: 'pt-BR' });
+        }
+
+        const bricksBuilder = mpInstance.bricks();
+
+        if (cardPaymentBrickController) {
+            cardPaymentBrickController.unmount();
+        }
+
+        cardPaymentBrickController = await bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', {
+            initialization: {
+                amount: precoTotal,
+            },
+            customization: {
+                visual: {
+                    style: {
+                        theme: 'default'
+                    }
+                },
+                paymentMethods: {
+                    maxInstallments: 1
+                }
+            },
+            callbacks: {
+                onReady: () => {},
+                onSubmit: (cardFormData) => {
+                    return new Promise((resolve, reject) => {
+                        // Enviar dados para cobrança com split de R$ 5,00 para Nexora
+                        processarPagamentoMercadoPago(cardFormData)
+                            .then(() => resolve())
+                            .catch((err) => reject(err));
+                    });
+                },
+                onError: (error) => {
+                    console.error("Erro no Mercado Pago Brick:", error);
+                }
+            }
+        });
+    } catch (e) {
+        console.error("Erro ao inicializar Mercado Pago Brick:", e);
+    }
+}
+
+// Simular chamada backend de Split Payment (Retenção de R$ 5,00 para Nexora)
+async function processarPagamentoMercadoPago(cardFormData) {
+    console.log("Dados do Cartão Tokenizados pelo MP:", cardFormData);
+    // Aqui é onde o split ("application_fee": 5.00) é repassado na chamada de pagamento
+    return true;
 }
 
 // Evento do botão de copiar chave Pix
@@ -231,7 +313,6 @@ function configurarHorarios() {
         });
     });
 
-    // Quando a data muda, reanalisa os horários ocupados
     bookingDate?.addEventListener("change", verificarHorariosOcupados);
 }
 
@@ -241,7 +322,6 @@ async function verificarHorariosOcupados() {
 
     const slots = document.querySelectorAll(".time-slot-btn");
     
-    // Resetar todos os botões antes da verificação
     slots.forEach(slot => {
         slot.disabled = false;
         slot.classList.remove("active", "disabled");
@@ -251,7 +331,6 @@ async function verificarHorariosOcupados() {
     });
     bookingTime.value = "";
 
-    // Buscar agendamentos na base de dados para esta data
     const { data: agendamentos, error } = await supabaseClient
         .from("agendamentos")
         .select("horario, hora_inicio, status")
@@ -264,14 +343,12 @@ async function verificarHorariosOcupados() {
         return;
     }
 
-    // Criar conjunto de horários já reservados
     const ocupados = new Set();
     (agendamentos || []).forEach(item => {
         if (item.horario) ocupados.add(item.horario.substring(0, 5));
         if (item.hora_inicio) ocupados.add(item.hora_inicio.substring(0, 5));
     });
 
-    // Desativar botões correspondentes aos horários ocupados
     slots.forEach(slot => {
         const hora = slot.getAttribute("data-time")?.substring(0, 5);
         if (ocupados.has(hora)) {
@@ -315,7 +392,7 @@ bookingForm?.addEventListener("submit", async (e) => {
         const nomeCliente = clientName.value.trim();
         const telefoneCliente = clientPhone.value.trim();
 
-        // Verificação final antes de salvar (evita agendamento duplo simultâneo)
+        // Trava de segurança contra agendamento duplo
         const { data: conflito } = await supabaseClient
             .from("agendamentos")
             .select("id")
@@ -331,7 +408,7 @@ bookingForm?.addEventListener("submit", async (e) => {
             return;
         }
 
-        // 1. Cadastrar/Procurar Cliente
+        // 1. Cadastrar / Procurar Cliente
         let clienteId = null;
         const { data: clienteExistente } = await supabaseClient
             .from("clientes")
@@ -381,12 +458,12 @@ bookingForm?.addEventListener("submit", async (e) => {
                 }
             }
         } else if (formaPagamentoSelecionada === "credito" || formaPagamentoSelecionada === "debito") {
-            statusPagamento = "pago_cartao";
+            statusPagamento = "pago_cartao_mp";
         } else {
             statusPagamento = "pendente_presencial";
         }
 
-        // 3. Gravar Agendamento preenchendo todos os campos
+        // 3. Gravar Agendamento no Supabase
         const payload = {
             negocio_id: negocioId,
             servico_id: servicoSelecionadoId,
@@ -420,8 +497,8 @@ bookingForm?.addEventListener("submit", async (e) => {
         const rotulosPagamento = {
             dinheiro: "Dinheiro Presencial",
             pix: "Pix Antecipado",
-            credito: "Cartão de Crédito",
-            debito: "Cartão de Débito"
+            credito: "Cartão de Crédito (Mercado Pago)",
+            debito: "Cartão de Débito (Mercado Pago)"
         };
         const summaryPaymentEl = document.getElementById("summary-payment");
         if (summaryPaymentEl) {
@@ -446,5 +523,5 @@ function mostrarErroForm(texto) {
     errorMsg.style.display = "block";
 }
 
-// Inicializar a aplicação pública
+// Inicializar aplicação
 inicializarPaginaPublica();
