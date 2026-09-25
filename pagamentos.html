@@ -5,412 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nexora - Configurações de Pagamento</title>
     
+    <!-- Folha de Estilos Oficial -->
+    <link rel="stylesheet" href="css/style.css">
+
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
-
-    <!-- ESTILOS OFICIAIS DO NEXORA (EMBUTIDOS PARA NÃO QUEBRAR O VISUAL) -->
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f1f5f9;
-            color: #0f172a;
-            min-height: 100vh;
-        }
-
-        /* CABEÇALHO / NAVBAR NEXORA */
-        .app-header {
-            background-color: #0f172a;
-            padding: 14px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-container {
-            max-width: 800px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .brand-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .brand-icon {
-            font-size: 20px;
-        }
-
-        .brand-name {
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-menu {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 2px;
-        }
-
-        .nav-link {
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .nav-link:hover {
-            color: #ffffff;
-            background-color: rgba(255,255,255,0.08);
-        }
-
-        .nav-link.active {
-            color: #ffffff;
-            background-color: #1e293b;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* ÁREA DE CONTEÚDO */
-        .main-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 24px 16px 40px 16px;
-        }
-
-        .page-header {
-            margin-bottom: 20px;
-        }
-
-        .page-title {
-            font-size: 22px;
-            font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 4px;
-        }
-
-        .page-subtitle {
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        /* ALERTAS */
-        .alert-box {
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        /* CARDS DO PAINEL */
-        .card {
-            background-color: #ffffff;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        /* MERCADO PAGO BANNER */
-        .mp-card {
-            background: linear-gradient(135deg, #009ee3 0%, #0072bc 100%);
-            color: #ffffff;
-            border: none;
-        }
-
-        .mp-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .mp-icon {
-            font-size: 28px;
-        }
-
-        .mp-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .mp-desc {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.9);
-            margin-top: 2px;
-            line-height: 1.4;
-        }
-
-        .mp-footer {
-            padding-top: 14px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        /* OPÇÕES DE CHECKBOX */
-        .options-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            background-color: #f8fafc;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        .checkbox-item:hover {
-            border-color: #cbd5e1;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #10b981;
-            cursor: pointer;
-        }
-
-        .checkbox-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #334155;
-            cursor: pointer;
-        }
-
-        /* CAMPOS DO PIX */
-        .pix-section {
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .form-control:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-
-        /* BOTÕES */
-        .btn {
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            opacity: 0.9;
-        }
-
-        .btn-mp {
-            background-color: #ffffff;
-            color: #0072bc;
-            width: 100%;
-        }
-
-        .btn-danger-outline {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            border: 1px solid #ffffff;
-            font-size: 12px;
-            padding: 6px 12px;
-        }
-
-        .btn-submit {
-            background-color: #10b981;
-            color: #ffffff;
-            width: 100%;
-            font-size: 15px;
-            padding: 14px;
-        }
-    </style>
 </head>
-<body>
+<body class="dashboard-body">
 
-    <!-- CABEÇALHO DO PAINEL NEXORA -->
-    <header class="app-header">
-        <div class="header-container">
-            <a href="painel.html" class="brand-logo">
-                <span class="brand-icon">⚡</span>
-                <span class="brand-name">Nexora</span>
-            </a>
-            <nav class="nav-menu">
-                <a href="painel.html" class="nav-link">🗓️ Agendamentos</a>
-                <a href="servicos.html" class="nav-link">✂️ Serviços</a>
-                <a href="pagamentos.html" class="nav-link active">💳 Pagamentos</a>
-                <a href="configuracoes.html" class="nav-link">⚙️ Configurações</a>
-            </nav>
-        </div>
-    </header>
+    <div class="dashboard-layout">
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="main-content">
-        
-        <div class="page-header">
-            <h1 class="page-title">Configurações de Pagamento</h1>
-            <p class="page-subtitle">Gerencie o recebimento por Mercado Pago, Pix manual e Dinheiro presencial.</p>
-        </div>
-
-        <!-- NOTIFICAÇÃO DE ALERTA -->
-        <div id="status-alert" class="alert-box"></div>
-
-        <!-- CARD INTEGRAÇÃO MERCADO PAGO -->
-        <div class="card mp-card">
-            <div class="mp-header">
-                <span class="mp-icon">🤝</span>
-                <div>
-                    <h2 class="mp-title">Mercado Pago (Online)</h2>
-                    <p class="mp-desc">Receba cobranças por Cartão de Crédito/Débito. As vendas caem na sua conta e a retenção de R$ 5,00 da taxa da plataforma é automática.</p>
+        <!-- SIDEBAR LATERAL PADRÃO NEXORA -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <div class="brand">
+                    <div class="brand-symbol">⚡</div>
+                    <span class="brand-name">Nexora</span>
                 </div>
+                <nav class="sidebar-nav">
+                    <span class="nav-title">MENU PRINCIPAL</span>
+                    <a href="painel.html" class="nav-item">
+                        <span class="nav-icon">🗓️</span>
+                        <span>Agendamentos</span>
+                    </a>
+                    <a href="servicos.html" class="nav-item">
+                        <span class="nav-icon">✂️</span>
+                        <span>Serviços</span>
+                    </a>
+                    <a href="pagamentos.html" class="nav-item active">
+                        <span class="nav-icon">💳</span>
+                        <span>Pagamentos</span>
+                    </a>
+                    <a href="meu-negocio.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Meu Negócio</span>
+                    </a>
+                </nav>
             </div>
 
-            <div class="mp-footer">
-                <div>
-                    <span style="font-size: 13px; opacity: 0.9;">Status da Conexão:</span>
-                    <strong id="mp-status-text" style="font-size: 14px; margin-left: 6px;">Verificando...</strong>
+            <div class="sidebar-user">
+                <div class="user-avatar" id="sidebar-user-avatar">N</div>
+                <div class="user-info">
+                    <strong id="sidebar-user-name">Carregando...</strong>
+                    <span id="sidebar-user-email">...</span>
                 </div>
-
-                <button id="btn-conectar-mp" type="button" class="btn btn-mp" style="display: none;">
-                    🔗 Conectar Minha Conta Mercado Pago
-                </button>
-
-                <button id="btn-desconectar-mp" type="button" class="btn btn-danger-outline" style="display: none;">
-                    Desconectar Conta
-                </button>
+                <button class="logout-icon" id="btn-logout" title="Sair">🚪</button>
             </div>
-        </div>
+        </aside>
 
-        <!-- CARD OPÇÕES DE PAGAMENTO -->
-        <div class="card">
-            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">Formas de Pagamento Aceitas no Agendamento</h3>
-
-            <form id="form-config-pagamentos">
-                <div class="options-group">
-                    
-                    <label class="checkbox-item" for="aceita-dinheiro">
-                        <input type="checkbox" id="aceita-dinheiro">
-                        <span class="checkbox-label">💵 Pagamento Presencial (Dinheiro no Local)</span>
-                    </label>
-
-                    <label class="checkbox-item" for="aceita-pix">
-                        <input type="checkbox" id="aceita-pix">
-                        <span class="checkbox-label">⚡ Pix Manual (Com Envio de Comprovante)</span>
-                    </label>
-
-                    <label class="checkbox-item" for="aceita-credito">
-                        <input type="checkbox" id="aceita-credito">
-                        <span class="checkbox-label">💳 Cartão de Crédito (via Mercado Pago)</span>
-                    </label>
-
-                    <label class="checkbox-item" for="aceita-debito">
-                        <input type="checkbox" id="aceita-debito">
-                        <span class="checkbox-label">💳 Cartão de Débito (via Mercado Pago)</span>
-                    </label>
+        <!-- ÁREA PRINCIPAL DO DASHBOARD -->
+        <main class="dashboard-main">
+            
+            <!-- HEADER SUPERIOR DE NAVEGAÇÃO -->
+            <header class="dashboard-header">
+                <button class="mobile-menu-button" id="mobile-menu-btn">☰</button>
+                <div class="header-left">
+                    <span class="header-label">Painel de Controle / Pagamentos</span>
                 </div>
+                <div class="header-right">
+                    <div class="header-avatar" id="header-user-avatar">N</div>
+                </div>
+            </header>
 
-                <!-- DETALHES PIX MANUAL -->
-                <div id="secao-detalhes-pix" class="pix-section">
-                    <h4 style="margin-bottom: 12px; font-size: 14px; color: #0f172a;">Dados para Recebimento Pix Direto:</h4>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
-                        <div class="form-group">
-                            <label for="tipo-chave-pix">Tipo da Chave</label>
-                            <select id="tipo-chave-pix" class="form-control">
-                                <option value="cpf">CPF</option>
-                                <option value="cnpj">CNPJ</option>
-                                <option value="email">E-mail</option>
-                                <option value="telefone">Telefone</option>
-                                <option value="aleatoria">Chave Aleatória</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="chave-pix">Sua Chave Pix</label>
-                            <input type="text" id="chave-pix" class="form-control" placeholder="Cole sua chave aqui">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="titular-pix">Nome do Titular da Conta</label>
-                        <input type="text" id="titular-pix" class="form-control" placeholder="Nome completo do titular">
+            <!-- CONTEÚDO PRINCIPAL -->
+            <div class="dashboard-content">
+                
+                <div class="welcome-section">
+                    <div>
+                        <p class="welcome-small">Configurações Financeiras</p>
+                        <h1>Formas de <span>Recebimento</span></h1>
+                        <p class="welcome-description">Gerencie as opções de pagamento aceitas nos seus agendamentos públicos.</p>
                     </div>
                 </div>
 
-                <button type="submit" id="btn-salvar-config" class="btn btn-submit">
-                    💾 Salvar Configurações
-                </button>
-            </form>
-        </div>
+                <!-- ALERTA / MENSAGEM DE STATUS -->
+                <div id="status-alert" class="business-message" style="display: none; margin-bottom: 20px;"></div>
 
-    </main>
+                <!-- CARD INTEGRACAO MERCADO PAGO -->
+                <div class="dashboard-card" style="background: linear-gradient(135deg, #009ee3 0%, #0072bc 100%); color: #ffffff; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px;">
+                        <span style="font-size: 32px; line-height: 1;">🤝</span>
+                        <div>
+                            <h2 style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Mercado Pago (Online)</h2>
+                            <p style="font-size: 13px; color: rgba(255, 255, 255, 0.9); line-height: 1.4;">
+                                Receba por Cartão de Crédito ou Débito. O dinheiro cai direto na sua conta do Mercado Pago e a retenção de R$ 5,00 por agendamento online para a Nexora é feita de forma automática.
+                            </p>
+                        </div>
+                    </div>
 
+                    <div style="padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <span style="font-size: 12px; opacity: 0.85;">Status da Conexão:</span>
+                            <strong id="mp-status-text" style="font-size: 13px; margin-left: 6px; color: #ffffff;">Verificando...</strong>
+                        </div>
+
+                        <button id="btn-conectar-mp" type="button" class="primary-button" style="display: none; background: #ffffff; color: #0072bc; box-shadow: none; width: auto; height: auto; padding: 10px 18px;">
+                            🔗 Conectar Mercado Pago
+                        </button>
+
+                        <button id="btn-desconectar-mp" type="button" class="secondary-button" style="display: none; background: rgba(255,255,255,0.15); color: #ffffff; border-color: #ffffff; width: auto; padding: 8px 14px; font-size: 12px;">
+                            Desconectar Conta
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD CONFIGURAÇÕES DE PAGAMENTO LOCAL E PIX -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2>Opções de Pagamento Aceitas</h2>
+                        <p>Selecione os métodos que ficarão visíveis para seus clientes na página de agendamento.</p>
+                    </div>
+
+                    <form id="form-config-pagamentos">
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                            
+                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-small); background: #f8fafc; cursor: pointer;">
+                                <input type="checkbox" id="aceita-dinheiro" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                <span style="font-size: 14px; font-weight: 600; color: var(--text);">💵 Pagamento Presencial (Dinheiro no Local)</span>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-small); background: #f8fafc; cursor: pointer;">
+                                <input type="checkbox" id="aceita-pix" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                <span style="font-size: 14px; font-weight: 600; color: var(--text);">⚡ Pix Manual (Com Envio de Comprovante)</span>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-small); background: #f8fafc; cursor: pointer;">
+                                <input type="checkbox" id="aceita-credito" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                <span style="font-size: 14px; font-weight: 600; color: var(--text);">💳 Cartão de Crédito (via Mercado Pago)</span>
+                            </label>
+
+                            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-small); background: #f8fafc; cursor: pointer;">
+                                <input type="checkbox" id="aceita-debito" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                                <span style="font-size: 14px; font-weight: 600; color: var(--text);">💳 Cartão de Débito (via Mercado Pago)</span>
+                            </label>
+
+                        </div>
+
+                        <!-- SEÇÃO PIX MANUAL -->
+                        <div id="secao-detalhes-pix" style="display: none; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-small); padding: 20px; margin-bottom: 24px;">
+                            <h3 style="font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px;">Dados para Recebimento Pix Direto</h3>
+
+                            <div class="form-grid" style="margin-bottom: 14px;">
+                                <div class="form-group">
+                                    <label for="tipo-chave-pix">Tipo da Chave</label>
+                                    <select id="tipo-chave-pix" style="width: 100%; height: 46px; border: 1px solid var(--border); border-radius: var(--radius-small); padding: 0 12px; font-size: 14px; outline: none; background: #ffffff;">
+                                        <option value="cpf">CPF</option>
+                                        <option value="cnpj">CNPJ</option>
+                                        <option value="email">E-mail</option>
+                                        <option value="telefone">Telefone</option>
+                                        <option value="aleatoria">Chave Aleatória</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="chave-pix">Sua Chave Pix</label>
+                                    <input type="text" id="chave-pix" placeholder="Cole sua chave aqui" style="height: 46px; border-radius: var(--radius-small);">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="titular-pix">Nome do Titular da Conta Bancária</label>
+                                <input type="text" id="titular-pix" placeholder="Nome completo do titular" style="height: 46px; border-radius: var(--radius-small);">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="submit" id="btn-salvar-config" class="primary-button" style="height: 48px; padding: 0 28px; font-size: 14px;">
+                                💾 Salvar Configurações
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Script do Menu Mobile -->
+    <script>
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+            document.getElementById('sidebar')?.classList.toggle('mobile-open');
+        });
+    </script>
     <script src="js/pagamentos.js"></script>
 </body>
 </html>
