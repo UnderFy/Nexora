@@ -55,11 +55,13 @@ async function inicializarPaginaPublica() {
         bookingDate.min = hoje;
         bookingDate.value = hoje;
 
-        const { data: negocio, error: errNegocio } = await supabaseClient
-            .from("negocios")
-            .select("*")
-            .eq("id", negocioId)
-            .maybeSingle();
+        // CÓDIGO ATUALIZADO
+const { data: negocio, error: errNegocio } = await supabaseClient
+    .from("negocios")
+    .select("*")
+    .or(`id.eq.${negocioId},user_id.eq.${negocioId}`)
+    .maybeSingle();
+
 
         if (errNegocio || !negocio) {
             console.error("Erro ao procurar negócio:", errNegocio);
