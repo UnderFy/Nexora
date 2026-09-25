@@ -1,3 +1,7 @@
+/* ============================================================
+   NEXORA - LÓGICA DE AGENDAMENTO PÚBLICO & PAGAMENTO (js/p.js)
+============================================================ */
+
 // Elementos de ecrã
 const loadingState = document.getElementById("loading-state");
 const errorState = document.getElementById("error-state");
@@ -20,9 +24,19 @@ const errorMsg = document.getElementById("booking-error-msg");
 const bookingSection = document.getElementById("booking-section");
 const successSection = document.getElementById("success-section");
 
+// Elementos do Módulo de Pagamento
+const containerPagamentos = document.getElementById("opcoes-pagamento-container");
+const painelPix = document.getElementById("painel-pix-detalhes");
+const painelCartao = document.getElementById("painel-cartao-detalhes");
+
 let negocioId = null;
+let negocioDados = null;
 let servicosDisponiveis = [];
 let servicoSelecionadoId = null;
+
+// Estado de Pagamento
+let configPagamentoNegocio = null;
+let formaPagamentoSelecionada = "dinheiro";
 
 async function inicializarPaginaPublica() {
     try {
@@ -50,6 +64,7 @@ async function inicializarPaginaPublica() {
             return;
         }
 
+        negocioDados = negocio;
         const nome = negocio.nome || "Meu Negócio";
         bizName.textContent = nome;
         bizAvatar.textContent = nome.trim().charAt(0).toUpperCase();
@@ -59,6 +74,7 @@ async function inicializarPaginaPublica() {
         bizLocation.textContent = `📍 ${[endereco, cidade].filter(Boolean).join(" - ") || "Localização não informada"}`;
         bizDescription.textContent = negocio.descricao || "";
 
+        // 1. Carregar Serviços disponíveis
         const { data: servicos, error: errServicos } = await supabaseClient
             .from("servicos")
             .select("*")
@@ -72,9 +88,13 @@ async function inicializarPaginaPublica() {
             renderizarServicos(servicos);
         }
 
+        // 2. Carregar Formas de Pagamento ativas do negócio
+        await carregarFormasPagamento(negocioId);
+
+        // 3. Configurar seletor de horários
         configurarHorarios();
         
-        // Atualizar horários ocupados para a data inicial
+        // 4. Atualizar horários ocupados para a data inicial
         await verificarHorariosOcupados();
 
         loadingState.style.display = "none";
@@ -118,6 +138,87 @@ function selecionarServico(id) {
         radio.closest(".service-selection-card").classList.add("selected");
     }
 }
+
+/* -------------------------------------------------------------
+ * MÓDULO DE PAGAMENTO
+ * ----------------------------------------------------------- */
+async function carregarFormasPagamento(negocioIdParam) {
+    if (!containerPagamentos) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("configuracao_pagamentos")
+            .select("*")
+            .eq("negocio_id", negocioIdParam)
+            .maybeSingle();
+
+        configPagamentoNegocio = data || { aceita_dinheiro: true };
+    } catch (e) {
+        console.warn("Aviso ao buscar configurações de pagamento, aplicando padrão:", e);
+        configPagamentoNegocio = { aceita_dinheiro: true };
+    }
+
+    containerPagamentos.innerHTML = "";
+
+    const opcoes = [
+        { id: "dinheiro", label: "💵 Dinheiro no Local", ativo: configPagamentoNegocio.aceita_dinheiro ?? true },
+        { id: "pix", label: "⚡ Pix (Pago Antecipadamente)", ativo: configPagamentoNegocio.aceita_pix ?? false },
+        { id: "credito", label: "💳 Cartão de Crédito (Antecipado)", ativo: configPagamentoNegocio.aceita_credito ?? false },
+        { id: "debito", label: "💳 Cartão de Débito (Antecipado)", ativo: configPagamentoNegocio.aceita_debito ?? false }
+    ];
+
+    const opcoesAtivas = opcoes.filter(o => o.ativo);
+
+    if (opcoesAtivas.length === 0) {
+        opcoesAtivas.push({ id: "dinheiro", label: "💵 Dinheiro no Local", ativo: true });
+    }
+
+    opcoesAtivas.forEach((op, index) => {
+        const label = document.createElement("label");
+        label.className = `payment-option-card ${index === 0 ? 'selected' : ''}`;
+        label.innerHTML = `
+            <input type="radio" name="forma_pagamento_opcao" value="${op.id}" ${index === 0 ? 'checked' : ''}>
+            <span style="font-size: 13px; font-weight: 600; color: #0f172a;">${op.label}</span>
+        `;
+
+        label.addEventListener("click", () => {
+            document.querySelectorAll(".payment-option-card").forEach(c => c.classList.remove("selected"));
+            label.classList.add("selected");
+            label.querySelector("input").checked = true;
+            alterarFormaPagamento(op.id);
+        });
+
+        containerPagamentos.appendChild(label);
+    });
+
+    alterarFormaPagamento(opcoesAtivas[0].id);
+}
+
+function alterarFormaPagamento(tipo) {
+    formaPagamentoSelecionada = tipo;
+
+    if (painelPix) painelPix.style.display = (tipo === "pix") ? "block" : "none";
+    if (painelCartao) painelCartao.style.display = (tipo === "credito" || tipo === "debito") ? "block" : "none";
+
+    if (tipo === "pix" && configPagamentoNegocio) {
+        const titularEl = document.getElementById("pix-titular-display");
+        const tipoEl = document.getElementById("pix-tipo-display");
+        const chaveEl = document.getElementById("pix-chave-display");
+
+        if (titularEl) titularEl.textContent = configPagamentoNegocio.titular_pix || (negocioDados?.nome || "Empreendedor");
+        if (tipoEl) tipoEl.textContent = (configPagamentoNegocio.tipo_chave_pix || "Chave").toUpperCase();
+        if (chaveEl) chaveEl.textContent = configPagamentoNegocio.chave_pix || "Não cadastrada";
+    }
+}
+
+// Evento do botão de copiar chave Pix
+document.getElementById("btn-copiar-pix")?.addEventListener("click", () => {
+    const chave = document.getElementById("pix-chave-display")?.textContent;
+    if (chave && chave !== "Não cadastrada" && chave !== "-") {
+        navigator.clipboard.writeText(chave);
+        alert("Chave Pix copiada!");
+    }
+});
 
 function configurarHorarios() {
     const slots = document.querySelectorAll(".time-slot-btn");
@@ -255,7 +356,37 @@ bookingForm?.addEventListener("submit", async (e) => {
             if (novoCliente) clienteId = novoCliente.id;
         }
 
-        // 2. Gravar Agendamento preenchendo todos os campos de hora e data
+        // 2. Upload de Comprovativo Pix (se aplicável)
+        let comprovanteUrl = null;
+        let statusPagamento = "pendente";
+
+        if (formaPagamentoSelecionada === "pix") {
+            statusPagamento = "aguardando_aprovacao_pix";
+            const fileInput = document.getElementById("input-comprovante-pix");
+
+            if (fileInput?.files[0]) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `comprovantes/pix_${Date.now()}.${fileExt}`;
+
+                const { error: uploadErr } = await supabaseClient.storage
+                    .from("portfolio")
+                    .upload(fileName, file);
+
+                if (!uploadErr) {
+                    const { data: pubData } = supabaseClient.storage
+                        .from("portfolio")
+                        .getPublicUrl(fileName);
+                    comprovanteUrl = pubData?.publicUrl || null;
+                }
+            }
+        } else if (formaPagamentoSelecionada === "credito" || formaPagamentoSelecionada === "debito") {
+            statusPagamento = "pago_cartao";
+        } else {
+            statusPagamento = "pendente_presencial";
+        }
+
+        // 3. Gravar Agendamento preenchendo todos os campos
         const payload = {
             negocio_id: negocioId,
             servico_id: servicoSelecionadoId,
@@ -268,6 +399,9 @@ bookingForm?.addEventListener("submit", async (e) => {
             data_agendamento: dataFormatada,
             horario: horario,
             hora_inicio: horario,
+            forma_pagamento: formaPagamentoSelecionada,
+            status_pagamento: statusPagamento,
+            comprovante_pix_url: comprovanteUrl,
             status: "confirmado"
         };
 
@@ -277,11 +411,22 @@ bookingForm?.addEventListener("submit", async (e) => {
 
         if (errAgendamento) throw errAgendamento;
 
-        // 3. Ecrã de Sucesso
+        // 4. Ecrã de Sucesso
         document.getElementById("summary-service").textContent = servicoObj ? servicoObj.nome : "Serviço";
         document.getElementById("summary-date").textContent = dataFormatada.split("-").reverse().join("/");
         document.getElementById("summary-time").textContent = horario;
         document.getElementById("summary-client").textContent = nomeCliente;
+
+        const rotulosPagamento = {
+            dinheiro: "Dinheiro Presencial",
+            pix: "Pix Antecipado",
+            credito: "Cartão de Crédito",
+            debito: "Cartão de Débito"
+        };
+        const summaryPaymentEl = document.getElementById("summary-payment");
+        if (summaryPaymentEl) {
+            summaryPaymentEl.textContent = rotulosPagamento[formaPagamentoSelecionada] || formaPagamentoSelecionada;
+        }
 
         bookingSection.style.display = "none";
         successSection.style.display = "block";
@@ -301,5 +446,5 @@ function mostrarErroForm(texto) {
     errorMsg.style.display = "block";
 }
 
-// Inicializar
+// Inicializar a aplicação pública
 inicializarPaginaPublica();
