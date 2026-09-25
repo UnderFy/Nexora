@@ -86,6 +86,28 @@
             height: 18px;
         }
 
+        .payment-option-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .payment-option-card:hover, .payment-option-card.selected {
+            border-color: #4f46e5;
+            background-color: #f5f3ff;
+        }
+
+        .payment-option-card input[type="radio"] {
+            accent-color: #4f46e5;
+            width: 18px;
+            height: 18px;
+        }
+
         .step-title {
             font-size: 14px;
             font-weight: 700;
@@ -213,9 +235,46 @@
                         <input type="text" id="client-name" placeholder="Ex: Maria Silva" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 12px;">
                         <label for="client-phone" style="font-size: 12px; font-weight: 600; color: #475569;">Seu WhatsApp / Telefone *</label>
                         <input type="tel" id="client-phone" placeholder="Ex: (27) 99999-9999" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+
+                    <!-- PASSO 4: FORMA DE PAGAMENTO -->
+                    <p class="step-title">4. Forma de Pagamento</p>
+                    <div id="opcoes-pagamento-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                        <p style="color: #94a3b8; font-size: 13px;">Carregando formas de pagamento...</p>
+                    </div>
+
+                    <!-- DETALHES DO PIX -->
+                    <div id="painel-pix-detalhes" style="display: none; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Pagamento via Pix Antecipado</h4>
+                        <p style="font-size: 13px; color: #64748b; margin-bottom: 12px; line-height: 1.4;">
+                            Faça a transferência para a chave abaixo para garantir a sua reserva:
+                        </p>
+
+                        <div style="background: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 12px;">
+                            <span style="font-size: 12px; color: #64748b; display: block;">Titular: <strong id="pix-titular-display" style="color: #0f172a;">-</strong></span>
+                            <span style="font-size: 12px; color: #64748b; display: block; margin-top: 4px;">Chave (<span id="pix-tipo-display">PIX</span>):</span>
+                            <strong id="pix-chave-display" style="font-size: 14px; color: #4f46e5; word-break: break-all;">-</strong>
+                        </div>
+
+                        <button type="button" id="btn-copiar-pix" class="secondary-button" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; margin-bottom: 12px;">
+                            📋 Copiar Chave Pix
+                        </button>
+
+                        <label style="font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Anexar Comprovante (Opcional):</label>
+                        <input type="file" id="input-comprovante-pix" accept="image/*,application/pdf" style="width: 100%; font-size: 12px; color: #475569;">
+                    </div>
+
+                    <!-- DETALHES DO CARTÃO -->
+                    <div id="painel-cartao-detalhes" style="display: none; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #0f172a;">Dados do Cartão</h4>
+                        <input type="text" id="card-number" placeholder="Número do Cartão" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; margin-bottom: 8px;">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="card-expiry" placeholder="MM/AA" style="width: 50%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                            <input type="text" id="card-cvc" placeholder="CVC" style="width: 50%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+                        </div>
                     </div>
 
                     <div id="booking-error-msg" style="display: none; color: #ef4444; font-size: 13px; margin-bottom: 12px; text-align: center;"></div>
@@ -239,7 +298,8 @@
                     <p style="margin-bottom: 6px;"><strong>Serviço:</strong> <span id="summary-service">-</span></p>
                     <p style="margin-bottom: 6px;"><strong>Data:</strong> <span id="summary-date">-</span></p>
                     <p style="margin-bottom: 6px;"><strong>Horário:</strong> <span id="summary-time">-</span></p>
-                    <p style="margin-bottom: 0;"><strong>Cliente:</strong> <span id="summary-client">-</span></p>
+                    <p style="margin-bottom: 6px;"><strong>Cliente:</strong> <span id="summary-client">-</span></p>
+                    <p style="margin-bottom: 0;"><strong>Pagamento:</strong> <span id="summary-payment">-</span></p>
                 </div>
 
                 <button type="button" onclick="window.location.reload()" class="secondary-button" style="width: 100%; padding: 12px;">
@@ -257,7 +317,7 @@
 
     <!-- SCRIPTS -->
     <script src="js/supabase.js"></script>
-    <script src="js/p.js?v=3"></script>
+    <script src="js/p.js?v=4"></script>
 </body>
 
 </html>
